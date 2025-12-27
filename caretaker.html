@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Caretaker Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Simple inline CSS for demo; move to css/dashboard.css in your project -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* Top nav */
+    .navbar {
+      height: 56px;
+      background: #2c5f2d;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+    .navbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .navbar-title {
+      font-weight: 600;
+      font-size: 18px;
+    }
+    .navbar-subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      background: #1b5e20;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4caf50;
+    }
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff;
+      color: #2c5f2d;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Layout */
+    .page {
+      padding: 16px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .page-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .page-header-subtext {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, transform 0.05s;
+    }
+    .btn-primary {
+      background: #2c5f2d;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #1e4620; }
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .btn-secondary:hover { background: #d0d0d0; }
+    .btn:active { transform: scale(0.98); }
+
+    /* Main grid */
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: #777;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: minmax(0, 1fr); }
+    }
+    .stat-card {
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c5f2d;
+    }
+
+    /* Tasks table */
+    .tasks-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .tasks-table th,
+    .tasks-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    .tasks-table th {
+      font-size: 11px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-priority-high {
+      background: #ffebee;
+      color: #c62828;
+    }
+    .badge-priority-med {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+    .badge-priority-low {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .badge-status-pending {
+      background: #fffde7;
+      color: #f9a825;
+    }
+    .badge-status-progress {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .badge-status-done {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    /* Map container (placeholder) */
+    #map {
+      width: 100%;
+      height: 260px;
+      border-radius: 6px;
+      background: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 13px;
+    }
+
+    /* Recent inspections */
+    .inspections-list {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+    }
+    .inspection-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .inspection-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .inspection-meta {
+      font-size: 11px;
+      color: #777;
+    }
+    .health-chip {
+      padding: 2px 8px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .health-good { background: #e8f5e9; color: #2e7d32; }
+    .health-fair { background: #fff3e0; color: #ef6c00; }
+    .health-poor { background: #ffebee; color: #c62828; }
+
+    /* Filters row */
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .filters-row select {
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 12px;
+      min-width: 120px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <div>
+      <div class="navbar-title">🌳 Tree Inventory</div>
+      <div class="navbar-subtitle" id="caretakerZoneLabel">Caretaker • Zones: loading…</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <div id="todayLabel">Today</div>
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      <span>Online</span>
+    </div>
+    <div class="avatar" id="caretakerAvatar">CT</div>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- Header + quick actions -->
+  <div class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <div class="page-header-subtext">
+        See your tasks, zones, and recent inspections.
+      </div>
+    </div>
+    <div class="quick-actions">
+      <button class="btn btn-primary" id="btnLogInspection">+ Log inspection</button>
+      <button class="btn btn-secondary" id="btnReportHazard">⚠ Report hazard</button>
+      <button class="btn btn-secondary" id="btnMyZones">My zones</button>
+    </div>
+  </div>
+
+  <!-- Personal KPIs -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Inspections today</div>
+      <div class="stat-value" id="statInspectionsToday">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open tasks</div>
+      <div class="stat-value" id="statOpenTasks">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Trees with issues</div>
+      <div class="stat-value" id="statTreesIssues">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">On-time completion</div>
+      <div class="stat-value" id="statOnTimeRate">0%</div>
+    </div>
+  </div>
+
+  <!-- Main grid: tasks + map -->
+  <div class="grid">
+    <!-- Left: Today's tasks -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Today’s tasks</div>
+          <div class="card-subtitle" id="tasksSubtitle">Loading tasks…</div>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <select id="filterZone">
+          <option value="">All zones</option>
+        </select>
+        <select id="filterPriority">
+          <option value="">All priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select id="filterStatus">
+          <option value="">All status</option>
+          <option value="pending">Pending</option>
+          <option value="in_progress">In progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+
+      <table class="tasks-table" id="tasksTable">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Tree / zone</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Due</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tasksTbody">
+          <!-- Filled by JS -->
+        </tbody>
+      </table>
+      <div id="noTasksMessage" style="font-size:13px;color:#777;margin-top:8px;display:none;">
+        No tasks for today. 🎉
+      </div>
+    </section>
+
+    <!-- Right: Map + recent inspections -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">My zones map</div>
+          <div class="card-subtitle">Trees in your assigned zones</div>
+        </div>
+        <div class="filters-row">
+          <select id="mapFilterZone">
+            <option value="">All zones</option>
+          </select>
+          <select id="mapFilterHealth">
+            <option value="">All health</option>
+            <option value="healthy">Healthy</option>
+            <option value="fair">Fair</option>
+            <option value="poor">Poor</option>
+            <option value="dying">Hazard / dying</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="map">Map placeholder (integrate Google Maps here)</div>
+
+      <div style="margin-top:12px;">
+        <div class="card-title" style="font-size:14px;margin-bottom:4px;">Recent inspections</div>
+        <div class="card-subtitle">Last 7 days</div>
+        <div class="inspections-list" id="inspectionsList">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Firebase SDKs (if using v8 style, adapt if you use v9 modular) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+  // TODO: replace with your config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let currentUser = null;
+  let userDoc = null;
+
+  // Helpers
+  function formatDate(date) {
+    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+  }
+
+  function setTodayLabel() {
+    const now = new Date();
+    const el = document.getElementById("todayLabel");
+    el.textContent = now.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" });
+  }
+
+  function priorityBadge(priority) {
+    if (priority === "high") return '<span class="badge badge-priority-high">High</span>';
+    if (priority === "medium") return '<span class="badge badge-priority-med">Medium</span>';
+    return '<span class="badge badge-priority-low">Low</span>';
+  }
+
+  function statusBadge(status) {
+    if (status === "in_progress") return '<span class="badge badge-status-progress">In progress</span>';
+    if (status === "done") return '<span class="badge badge-status-done">Done</span>';
+    return '<span class="badge badge-status-pending">Pending</span>';
+  }
+
+  function healthChip(health) {
+    if (health === "healthy") return '<span class="health-chip health-good">Healthy</span>';
+    if (health === "fair") return '<span class="health-chip health-fair">Fair</span>';
+    return '<span class="health-chip health-poor">Poor / issue</span>';
+  }
+
+  // Load caretaker context and data
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      // redirect to login if needed
+      console.warn("Not logged in");
+      return;
+    }
+    currentUser = user;
+    setTodayLabel();
+
+    // Load caretaker profile
+    const doc = await db.collection("users").doc(user.uid).get();
+    userDoc = doc.data() || {};
+    const initials = (userDoc.displayName || user.email || "CT")
+      .split(" ")
+      .map(p => p[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+    document.getElementById("caretakerAvatar").textContent = initials;
+    const zonesLabel = userDoc.zones && userDoc.zones.length
+      ? "Caretaker • Zones: " + userDoc.zones.join(", ")
+      : "Caretaker";
+    document.getElementById("caretakerZoneLabel").textContent = zonesLabel;
+
+    // Pre-fill zone filters
+    const filterZone = document.getElementById("filterZone");
+    const mapFilterZone = document.getElementById("mapFilterZone");
+    if (userDoc.zones && userDoc.zones.length) {
+      userDoc.zones.forEach(z => {
+        const opt1 = document.createElement("option");
+        opt1.value = z;
+        opt1.textContent = z;
+        filterZone.appendChild(opt1);
+        const opt2 = opt1.cloneNode(true);
+        mapFilterZone.appendChild(opt2);
+      });
+    }
+
+    loadTodayTasks();
+    loadRecentInspections();
+    // TODO: integrate Google Maps; for now we just leave placeholder
+  });
+
+  // Load today's tasks for this caretaker
+  async function loadTodayTasks() {
+    const tbody = document.getElementById("tasksTbody");
+    tbody.innerHTML = "";
+    document.getElementById("tasksSubtitle").textContent = "Loading tasks…";
+
+    const todayStart = new Date();
+    todayStart.setHours(0,0,0,0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23,59,59,999);
+
+    let q = db.collection("tasks")
+      .where("caretakerId", "==", currentUser.uid)
+      .where("dueDate", ">=", todayStart.toISOString())
+      .where("dueDate", "<=", todayEnd.toISOString())
+      .orderBy("dueDate", "asc");
+
+    const zoneFilter = document.getElementById("filterZone").value;
+    const priorityFilter = document.getElementById("filterPriority").value;
+    const statusFilter = document.getElementById("filterStatus").value;
+
+    // Additional filters will be applied client-side for simplicity
+    const snap = await q.get();
+    let tasks = [];
+    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+
+    if (zoneFilter) tasks = tasks.filter(t => t.zoneId === zoneFilter);
+    if (priorityFilter) tasks = tasks.filter(t => t.priority === priorityFilter);
+    if (statusFilter) tasks = tasks.filter(t => t.status === statusFilter);
+
+    if (!tasks.length) {
+      document.getElementById("noTasksMessage").style.display = "block";
+      document.getElementById("tasksSubtitle").textContent = "No tasks for today";
+      document.getElementById("statOpenTasks").textContent = "0";
+      return;
+    }
+    document.getElementById("noTasksMessage").style.display = "none";
+    document.getElementById("tasksSubtitle").textContent = tasks.length + " task(s) today";
+
+    let openCount = 0;
+    tbody.innerHTML = tasks.map(t => {
+      if (t.status !== "done") openCount++;
+      const due = t.dueDate ? formatDate(new Date(t.dueDate)) : "-";
+      const zoneLabel = t.zoneId || "-";
+      const treeLabel = t.treeCommonName || "Tree";
+      return `
+        <tr>
+          <td>${t.type || "Inspection"}</td>
+          <td>${treeLabel}<br><span style="font-size:11px;color:#777;">${zoneLabel}</span></td>
+          <td>${priorityBadge(t.priority || "medium")}</td>
+          <td>${statusBadge(t.status || "pending")}</td>
+          <td>${due}</td>
+          <td><button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="openTask('${t.id}')">Open</button></td>
+        </tr>
+      `;
+    }).join("");
+
+    document.getElementById("statOpenTasks").textContent = openCount.toString();
+  }
+
+  // Load recent inspections (last 7 days)
+  async function loadRecentInspections() {
+    const container = document.getElementById("inspectionsList");
+    container.innerHTML = "";
+
+    const now = new Date();
+    const weekAgo = new Date();
+    weekAgo.setDate(now.getDate() - 7);
+
+    const snap = await db.collection("inspections")
+      .where("caretakerId", "==", currentUser.uid)
+      .where("inspectionDate", ">=", weekAgo.toISOString())
+      .orderBy("inspectionDate", "desc")
+      .limit(10)
+      .get();
+
+    let inspections = [];
+    snap.forEach(doc => inspections.push({ id: doc.id, ...doc.data() }));
+
+    document.getElementById("statInspectionsToday").textContent =
+      inspections.filter(i => {
+        const d = new Date(i.inspectionDate);
+        return d.toDateString() === new Date().toDateString();
+      }).length.toString();
+
+    if (!inspections.length) {
+      container.innerHTML = '<div style="font-size:13px;color:#777;">No inspections in the last 7 days.</div>';
+      return;
+    }
+
+    container.innerHTML = inspections.map(i => {
+      const date = formatDate(new Date(i.inspectionDate));
+      const treeLabel = i.treeCommonName || "Tree";
+      const zoneLabel = i.zoneId || "-";
+      const health = i.healthStatus || "fair";
+      return `
+        <div class="inspection-item">
+          <div class="inspection-main">
+            <div>${treeLabel}</div>
+            <div class="inspection-meta">${date} • ${zoneLabel}</div>
+          </div>
+          <div>${healthChip(health)}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // Handlers for filters
+  document.getElementById("filterZone").addEventListener("change", loadTodayTasks);
+  document.getElementById("filterPriority").addEventListener("change", loadTodayTasks);
+  document.getElementById("filterStatus").addEventListener("change", loadTodayTasks);
+
+  // Placeholder handlers for quick actions
+  document.getElementById("btnLogInspection").addEventListener("click", () => {
+    alert("Open 'Log inspection' form (hook to your modal).");
+  });
+  document.getElementById("btnReportHazard").addEventListener("click", () => {
+    alert("Open 'Report hazard' form.");
+  });
+  document.getElementById("btnMyZones").addEventListener("click", () => {
+    alert("Navigate to 'My zones' page / section.");
+  });
+
+  // Open a specific task (you can show modal or navigate)
+  function openTask(taskId) {
+    alert("Open task details: " + taskId);
+    // TODO: implement side panel / modal with full task + quick inspection form
+  }
+</script>
+</body>
+</html>

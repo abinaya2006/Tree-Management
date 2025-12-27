@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/zoneform.css">
+
+</head>
+<body>
+    <div id="dashboard" class="dashboard">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>🌳 Tree Inventory Dashboard</h1>
+            <button style="width: 120px;" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Trees</h3>
+                <div class="value" id="totalTrees">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Healthy</h3>
+                <div class="value" id="healthyTrees">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Needs Care</h3>
+                <div class="value" id="needsCareTrees">0</div>
+            </div>
+            
+        </div>
+        
+        <div class="button-group">
+            <button onclick="showAddZone()">+ Add Zone</button>
+            <button onclick="showAddCare()">+ Add CareTaker</button>
+            <button onclick="showAddTreeForm()">+ Add Tree</button>
+            <button onclick="viewAllTrees()">View All Trees</button>
+        </div>
+        
+        
+        <div id="treeListContainer"></div>
+
+    </div>
+
+    <!-- ZONE ASSIGNMENT POPUP -->
+    <div id="zonemodal" class="modal" >
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Zone </h2>
+            <span class="close-btn" onclick="closeZoneModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <form id="zoneForm" >
+                <!-- Zone Selection -->
+                <div class="form-group">
+                    <label for="zonename">Zone Name
+                    <span class="required">*</span>
+
+                    </label>
+                    
+                    <input type="text" id="zonename" placeholder="Enter the Zone Name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="zoneDescription">
+                        <strong>Zone Description</strong>
+                    </label>
+                    <textarea id="zoneDescription" placeholder="Description"></textarea>
+
+                </div>
+                
+            </form>
+            <div class="modal-footer">
+                    <button id="zone-addbutton" class="btn btn-primary" onclick="addZone()">Add Zone</button>
+                </div>
+        </div>
+        
+        
+    </div>
+</div>
+
+<!-- CARETAKER ASSIGNMENT POPUP -->
+<div  class="modal"  id="caremodal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Caretaker</h2>
+            <span class="close-btn" onclick="closeCareModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <form id="caretakerForm">
+                
+                <!-- Caretaker Selection -->
+                <div class="form-group">
+                    <label for="caretakername">
+                        <strong>Caretaker name</strong>
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text" id="caretakername" placeholder="Enter the name" required>
+                </div>
+                
+                <!-- Caretaker Details-->
+                <div class="form-group">
+                    <label for="caretakerEmail">
+                        <strong>Caretaker Email</strong>
+                        <span class="required">*</span>
+
+                    </label>
+                    <input type="email" id="caretakerEmail" required   placeholder="Enter the email">
+                </div>
+                
+                <!-- Zone Selection -->
+                <div class="form-group">
+                    <label for="zoneSelect">
+                        <strong>Select Zone</strong>
+                        <span class="required">*</span>
+                    </label>
+                    <select id="zoneSelect" required>
+                        <option value="">-- Choose a Zone --</option>
+                        <option value="zone_north">Zone A - North Campus</option>
+                        
+                    </select>
+                    <small class="help-text">Select the campus zone to assign</small>
+                </div>
+                
+                <!-- Zone Description (Read-only) -->
+                <div class="form-group">
+                    <label for="showzoneDescription">
+                        <strong>Zone Description</strong>
+                    </label>
+                    <textarea id="showzoneDescription" readonly style="background: #f5f5f5; color: #666;">Select a zone above to see description</textarea>
+                </div>
+                
+                
+                
+            </form>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="addCare()">Add Caretaker</button>
+        </div>
+    </div>
+</div>
+
+
+    <script>
+        
+
+    </script>
+
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+
+    <script src="app.js"></script>
+</body>
+</html>
