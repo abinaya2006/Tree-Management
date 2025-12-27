@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Caretaker Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Simple inline CSS for demo; move to css/dashboard.css in your project -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -121,39 +120,9 @@
     }
     .btn-secondary:hover { background: #d0d0d0; }
     .btn:active { transform: scale(0.98); }
-
-    /* Main grid */
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-      gap: 16px;
-    }
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    /* Cards */
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .card-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .card-subtitle {
-      font-size: 12px;
-      color: #777;
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     /* Stats row */
@@ -186,103 +155,146 @@
       color: #2c5f2d;
     }
 
-    /* Tasks table */
-    .tasks-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .tasks-table th,
-    .tasks-table td {
-      padding: 8px 6px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-    }
-    .tasks-table th {
-      font-size: 11px;
-      color: #777;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      border-radius: 50px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .badge-priority-high {
-      background: #ffebee;
-      color: #c62828;
-    }
-    .badge-priority-med {
-      background: #fff3e0;
-      color: #ef6c00;
-    }
-    .badge-priority-low {
-      background: #e3f2fd;
-      color: #1565c0;
-    }
-    .badge-status-pending {
-      background: #fffde7;
-      color: #f9a825;
-    }
-    .badge-status-progress {
-      background: #e3f2fd;
-      color: #1565c0;
-    }
-    .badge-status-done {
-      background: #e8f5e9;
-      color: #2e7d32;
+    /* Main grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
     }
 
-    /* Map container (placeholder) */
-    #map {
-      width: 100%;
-      height: 260px;
-      border-radius: 6px;
-      background: #e0e0e0;
+    /* Cards */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      color: #666;
-      font-size: 13px;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: #777;
     }
 
-    /* Recent inspections */
-    .inspections-list {
-      margin-top: 8px;
+    /* Tree cards grid */
+    .trees-grid {
       display: grid;
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
     }
-    .inspection-item {
-      padding: 8px 10px;
+    .tree-card {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
       border-radius: 6px;
-      border: 1px solid #eee;
+      padding: 12px;
+      transition: box-shadow 0.2s;
+    }
+    .tree-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .tree-card-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+    .tree-card-id {
+      font-weight: 600;
       font-size: 13px;
+      flex: 1;
     }
-    .inspection-main {
+    .health-emoji {
+      font-size: 20px;
+    }
+    .tree-card-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .tree-card-meta strong {
+      display: block;
+      color: #333;
+      margin-bottom: 2px;
+    }
+    .tree-card-buttons {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
+      gap: 6px;
+      margin-top: 8px;
     }
-    .inspection-meta {
+    .tree-card-buttons button {
+      flex: 1;
+      padding: 4px 6px;
       font-size: 11px;
-      color: #777;
     }
-    .health-chip {
-      padding: 2px 8px;
-      border-radius: 50px;
-      font-size: 11px;
+
+    /* Health update modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
       font-weight: 500;
+      margin-bottom: 4px;
+      color: #333;
     }
-    .health-good { background: #e8f5e9; color: #2e7d32; }
-    .health-fair { background: #fff3e0; color: #ef6c00; }
-    .health-poor { background: #ffebee; color: #c62828; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
 
     /* Filters row */
     .filters-row {
@@ -292,12 +304,53 @@
       margin-bottom: 10px;
       font-size: 12px;
     }
-    .filters-row select {
+    .filters-row input {
       padding: 6px 8px;
       border-radius: 4px;
       border: 1px solid #ddd;
       font-size: 12px;
       min-width: 120px;
+    }
+
+    /* Zone info */
+    .zone-info {
+      background: #f0f8f1;
+      border-left: 4px solid #2c5f2d;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    .zone-info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+    .zone-info-label {
+      color: #666;
+    }
+    .zone-info-value {
+      font-weight: 600;
+      color: #2c5f2d;
+    }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 24px;
+      color: #777;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e0e0e0;
+      border-top-color: #2c5f2d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -308,7 +361,7 @@
   <div class="navbar-left">
     <div>
       <div class="navbar-title">🌳 Tree Inventory</div>
-      <div class="navbar-subtitle" id="caretakerZoneLabel">Caretaker • Zones: loading…</div>
+      <div class="navbar-subtitle" id="caretakerZoneLabel">Loading…</div>
     </div>
   </div>
   <div class="navbar-right">
@@ -318,139 +371,163 @@
       <span>Online</span>
     </div>
     <div class="avatar" id="caretakerAvatar">CT</div>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" id="btnLogout" onclick="logout()">Logout</button>
   </div>
 </nav>
 
 <div class="page">
-  <!-- Header + quick actions -->
+  <!-- Header -->
   <div class="page-header">
     <div>
-      <h1>Dashboard</h1>
-      <div class="page-header-subtext">
-        See your tasks, zones, and recent inspections.
+      <h1>My Trees</h1>
+      <div class="page-header-subtext" id="pageSubtext">
+        View and manage tree health in your assigned zone.
       </div>
     </div>
     <div class="quick-actions">
-      <button class="btn btn-primary" id="btnLogInspection">+ Log inspection</button>
-      <button class="btn btn-secondary" id="btnReportHazard">⚠ Report hazard</button>
-      <button class="btn btn-secondary" id="btnMyZones">My zones</button>
+      <button class="btn btn-primary" id="btnScanQR">📱 Scan QR Code</button>
+      <button class="btn btn-secondary" id="btnViewHistory">📋 Update History</button>
     </div>
   </div>
 
-  <!-- Personal KPIs -->
+  <!-- Zone info -->
+  <div class="zone-info">
+    <div class="zone-info-row">
+      <span class="zone-info-label">Zone:</span>
+      <span class="zone-info-value" id="zoneDisplayName">Loading…</span>
+    </div>
+    <div class="zone-info-row">
+      <span class="zone-info-label">Total trees assigned:</span>
+      <span class="zone-info-value" id="zoneTotalTrees">0</span>
+    </div>
+    <div class="zone-info-row">
+      <span class="zone-info-label">Trees needing care (poor/dying):</span>
+      <span class="zone-info-value" id="zoneNeedsCare">0</span>
+    </div>
+  </div>
+
+  <!-- Stats row -->
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">Inspections today</div>
-      <div class="stat-value" id="statInspectionsToday">0</div>
+      <div class="stat-label">Healthy</div>
+      <div class="stat-value" id="statHealthy">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Open tasks</div>
-      <div class="stat-value" id="statOpenTasks">0</div>
+      <div class="stat-label">Fair</div>
+      <div class="stat-value" id="statFair">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Trees with issues</div>
-      <div class="stat-value" id="statTreesIssues">0</div>
+      <div class="stat-label">Poor</div>
+      <div class="stat-value" id="statPoor">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">On-time completion</div>
-      <div class="stat-value" id="statOnTimeRate">0%</div>
+      <div class="stat-label">Dying</div>
+      <div class="stat-value" id="statDying">0</div>
     </div>
   </div>
 
-  <!-- Main grid: tasks + map -->
+  <!-- Trees grid -->
   <div class="grid">
-    <!-- Left: Today's tasks -->
     <section class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Today’s tasks</div>
-          <div class="card-subtitle" id="tasksSubtitle">Loading tasks…</div>
+          <div class="card-title">Trees in Zone</div>
+          <div class="card-subtitle" id="treesSubtitle">Loading trees…</div>
         </div>
       </div>
 
       <div class="filters-row">
-        <select id="filterZone">
-          <option value="">All zones</option>
-        </select>
-        <select id="filterPriority">
-          <option value="">All priorities</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-        <select id="filterStatus">
-          <option value="">All status</option>
-          <option value="pending">Pending</option>
-          <option value="in_progress">In progress</option>
-          <option value="done">Done</option>
+        <input type="text" id="filterSearch" placeholder="Search tree ID or name...">
+        <select id="filterHealth" style="min-width:100px;">
+          <option value="">All health status</option>
+          <option value="healthy">🟢 Healthy</option>
+          <option value="fair">🟡 Fair</option>
+          <option value="poor">🔴 Poor</option>
+          <option value="dying">⚫ Dying</option>
         </select>
       </div>
 
-      <table class="tasks-table" id="tasksTable">
-        <thead>
-          <tr>
-            <th>Task</th>
-            <th>Tree / zone</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Due</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tasksTbody">
-          <!-- Filled by JS -->
-        </tbody>
-      </table>
-      <div id="noTasksMessage" style="font-size:13px;color:#777;margin-top:8px;display:none;">
-        No tasks for today. 🎉
+      <div class="trees-grid" id="treesGrid">
+        <div class="loading"><div class="spinner"></div> Loading trees...</div>
       </div>
-    </section>
-
-    <!-- Right: Map + recent inspections -->
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">My zones map</div>
-          <div class="card-subtitle">Trees in your assigned zones</div>
-        </div>
-        <div class="filters-row">
-          <select id="mapFilterZone">
-            <option value="">All zones</option>
-          </select>
-          <select id="mapFilterHealth">
-            <option value="">All health</option>
-            <option value="healthy">Healthy</option>
-            <option value="fair">Fair</option>
-            <option value="poor">Poor</option>
-            <option value="dying">Hazard / dying</option>
-          </select>
-        </div>
-      </div>
-
-      <div id="map">Map placeholder (integrate Google Maps here)</div>
-
-      <div style="margin-top:12px;">
-        <div class="card-title" style="font-size:14px;margin-bottom:4px;">Recent inspections</div>
-        <div class="card-subtitle">Last 7 days</div>
-        <div class="inspections-list" id="inspectionsList">
-          <!-- Filled by JS -->
-        </div>
+      <div id="noTreesMessage" style="font-size:13px;color:#777;margin-top:12px;text-align:center;display:none;">
+        No trees found in your zone.
       </div>
     </section>
   </div>
 </div>
 
-<!-- Firebase SDKs (if using v8 style, adapt if you use v9 modular) -->
+<!-- Health Update Modal -->
+<div class="modal" id="healthModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      Update Tree Health
+      <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeHealthModal()">×</button>
+    </div>
+    <form id="healthForm" onsubmit="saveTreeHealth(event)">
+      <div class="form-group">
+        <label>Tree ID:</label>
+        <input type="text" id="modalTreeId" readonly style="background:#f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>Current Health:</label>
+        <input type="text" id="modalCurrentHealth" readonly style="background:#f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>New Health Status:</label>
+        <select id="modalNewHealth" required>
+          <option value="">Select health status</option>
+          <option value="healthy">🟢 Healthy</option>
+          <option value="fair">🟡 Fair</option>
+          <option value="poor">🔴 Poor</option>
+          <option value="dying">⚫ Dying</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional):</label>
+        <textarea id="modalNotes" placeholder="e.g., Dry leaves observed, branch damage, pest infestation..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeHealthModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div class="modal" id="qrModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      Scan Tree QR Code
+      <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeQRModal()">×</button>
+    </div>
+    <div class="form-group">
+      <label>Enter Tree ID or scan QR code:</label>
+      <input type="text" id="qrInput" placeholder="Tree ID or QR code..." autofocus>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeQRModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="handleQRInput()">Find Tree</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
-  // TODO: replace with your config
+  // Firebase config
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
+    apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
+    authDomain: "try-firebase-bdb77.firebaseapp.com",
+    projectId: "try-firebase-bdb77",
+    storageBucket: "try-firebase-bdb77.firebasestorage.app",
+    messagingSenderId: "327656427702",
+    appId: "1:327656427702:web:c2bf0fff68d18460029617",
+    measurementId: "G-KWBQWMT4GJ"
   };
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -458,210 +535,299 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  // State
   let currentUser = null;
   let userDoc = null;
+  let caretakerZoneId = null;
+  let allTrees = [];
+  let currentEditingTreeId = null;
 
-  // Helpers
+  // -------- Helpers --------
   function formatDate(date) {
-    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+    if (!date) return "-";
+    if (typeof date === "string") date = new Date(date);
+    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
   }
 
   function setTodayLabel() {
     const now = new Date();
-    const el = document.getElementById("todayLabel");
-    el.textContent = now.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" });
+    document.getElementById("todayLabel").textContent = now.toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    });
   }
 
-  function priorityBadge(priority) {
-    if (priority === "high") return '<span class="badge badge-priority-high">High</span>';
-    if (priority === "medium") return '<span class="badge badge-priority-med">Medium</span>';
-    return '<span class="badge badge-priority-low">Low</span>';
+  function healthEmoji(health) {
+    if (health === "healthy") return "🟢";
+    if (health === "fair") return "🟡";
+    if (health === "poor") return "🔴";
+    if (health === "dying") return "⚫";
+    return "⚪";
   }
 
-  function statusBadge(status) {
-    if (status === "in_progress") return '<span class="badge badge-status-progress">In progress</span>';
-    if (status === "done") return '<span class="badge badge-status-done">Done</span>';
-    return '<span class="badge badge-status-pending">Pending</span>';
+  // -------- Tree health update modal --------
+  async function openTreeHealthModal(tree) {
+    currentEditingTreeId = tree.id;
+    document.getElementById("modalTreeId").value = tree.treeId || tree.id;
+    document.getElementById("modalCurrentHealth").value = tree.healthStatus || "unknown";
+    document.getElementById("modalNewHealth").value = "";
+    document.getElementById("modalNotes").value = tree.notes || "";
+    document.getElementById("healthModal").classList.add("active");
   }
 
-  function healthChip(health) {
-    if (health === "healthy") return '<span class="health-chip health-good">Healthy</span>';
-    if (health === "fair") return '<span class="health-chip health-fair">Fair</span>';
-    return '<span class="health-chip health-poor">Poor / issue</span>';
+  function closeHealthModal() {
+    document.getElementById("healthModal").classList.remove("active");
+    currentEditingTreeId = null;
   }
 
-  // Load caretaker context and data
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      // redirect to login if needed
-      console.warn("Not logged in");
+  async function saveTreeHealth(e) {
+    e.preventDefault();
+    if (!currentEditingTreeId) return;
+
+    const newHealth = document.getElementById("modalNewHealth").value;
+    const notes = document.getElementById("modalNotes").value;
+
+    if (!newHealth) {
+      alert("Please select a health status.");
       return;
     }
+
+    try {
+      await db.collection("trees").doc(currentEditingTreeId).update({
+        healthStatus: newHealth,
+        lastCheckedBy: currentUser.uid,
+        lastCheckedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        notes: notes,
+      });
+
+      // Log update to tree_logs
+      await db.collection("tree_logs").add({
+        treeId: currentEditingTreeId,
+        caretakerId: currentUser.uid,
+        oldStatus: document.getElementById("modalCurrentHealth").value,
+        newStatus: newHealth,
+        notes: notes,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      alert("Tree health updated successfully!");
+      closeHealthModal();
+      await loadZoneTrees();
+      updateStatsAndKPIs();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update tree health: " + err.message);
+    }
+  }
+
+  // -------- QR Modal --------
+  function openQRModal() {
+    document.getElementById("qrModal").classList.add("active");
+    document.getElementById("qrInput").value = "";
+    setTimeout(() => document.getElementById("qrInput").focus(), 100);
+  }
+
+  function closeQRModal() {
+    document.getElementById("qrModal").classList.remove("active");
+  }
+
+  async function handleQRInput() {
+    const qrValue = document.getElementById("qrInput").value.trim();
+    if (!qrValue) {
+      alert("Please enter a Tree ID or scan a QR code.");
+      return;
+    }
+
+    // Find tree by treeId or doc id
+    let foundTree = allTrees.find(t => t.treeId === qrValue || t.id === qrValue);
+    if (!foundTree) {
+      alert("Tree not found: " + qrValue);
+      return;
+    }
+
+    closeQRModal();
+    await openTreeHealthModal(foundTree);
+  }
+
+  // -------- Load zone trees --------
+  async function loadZoneTrees() {
+    if (!caretakerZoneId) {
+      allTrees = [];
+      return;
+    }
+
+    try {
+      const snap = await db
+        .collection("trees")
+        .where("zoneId", "==", caretakerZoneId)
+        .get();
+      
+      allTrees = [];
+      snap.forEach((doc) => allTrees.push({ id: doc.id, ...doc.data() }));
+      
+      renderTrees();
+      updateStatsAndKPIs();
+    } catch (err) {
+      console.error(err);
+      document.getElementById("treesGrid").innerHTML = `<div class="loading" style="color:red;">Error loading trees: ${err.message}</div>`;
+    }
+  }
+
+  function renderTrees() {
+    const grid = document.getElementById("treesGrid");
+    const searchVal = document.getElementById("filterSearch").value.toLowerCase();
+    const healthFilter = document.getElementById("filterHealth").value;
+
+    let filtered = allTrees.filter(t => {
+      const matchesSearch = !searchVal || 
+        (t.treeId && t.treeId.toLowerCase().includes(searchVal)) ||
+        (t.commonName && t.commonName.toLowerCase().includes(searchVal));
+      
+      const matchesHealth = !healthFilter || t.healthStatus === healthFilter;
+      
+      return matchesSearch && matchesHealth;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = "";
+      document.getElementById("noTreesMessage").style.display = "block";
+      document.getElementById("treesSubtitle").textContent = "No trees match your filters.";
+      return;
+    }
+
+    document.getElementById("noTreesMessage").style.display = "none";
+    document.getElementById("treesSubtitle").textContent = filtered.length + " tree(s) shown";
+
+    grid.innerHTML = filtered.map(tree => `
+      <div class="tree-card">
+        <div class="tree-card-header">
+          <div class="tree-card-id">${tree.treeId || tree.id}</div>
+          <div class="health-emoji">${healthEmoji(tree.healthStatus)}</div>
+        </div>
+        <div class="tree-card-meta">
+          <strong>${tree.commonName || "Unknown"}</strong>
+          ${tree.scientificName ? `<span style="font-size:10px;color:#999;">${tree.scientificName}</span>` : ""}
+          <div style="margin-top:6px;">
+            Health: <strong>${tree.healthStatus || "unknown"}</strong>
+          </div>
+          <div style="margin-top:4px;">
+            Last checked: ${formatDate(tree.lastCheckedAt ? tree.lastCheckedAt.toDate ? tree.lastCheckedAt.toDate() : tree.lastCheckedAt : null)}
+          </div>
+          ${tree.notes ? `<div style="margin-top:4px;background:#f0f0f0;padding:4px;border-radius:3px;font-size:11px;color:#555;">${tree.notes}</div>` : ""}
+        </div>
+        <div class="tree-card-buttons">
+          <button class="btn btn-primary" onclick="handleTreeHealthClick('${tree.id}')">Update Health</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function handleTreeHealthClick(treeId) {
+    const tree = allTrees.find(t => t.id === treeId);
+    if (tree) {
+      openTreeHealthModal(tree);
+    }
+  }
+
+  function updateStatsAndKPIs() {
+    const stats = {
+      healthy: 0,
+      fair: 0,
+      poor: 0,
+      dying: 0,
+    };
+
+    allTrees.forEach(t => {
+      const status = t.healthStatus || "unknown";
+      if (stats.hasOwnProperty(status)) {
+        stats[status]++;
+      }
+    });
+
+    document.getElementById("statHealthy").textContent = stats.healthy;
+    document.getElementById("statFair").textContent = stats.fair;
+    document.getElementById("statPoor").textContent = stats.poor;
+    document.getElementById("statDying").textContent = stats.dying;
+
+    document.getElementById("zoneTotalTrees").textContent = allTrees.length;
+    document.getElementById("zoneNeedsCare").textContent = stats.poor + stats.dying;
+  }
+
+  // -------- Auth + initialization --------
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      console.warn("Not logged in");
+      window.location.href = "index.html";
+      return;
+    }
+
     currentUser = user;
     setTodayLabel();
 
-    // Load caretaker profile
-    const doc = await db.collection("users").doc(user.uid).get();
-    userDoc = doc.data() || {};
-    const initials = (userDoc.displayName || user.email || "CT")
-      .split(" ")
-      .map(p => p[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-    document.getElementById("caretakerAvatar").textContent = initials;
-    const zonesLabel = userDoc.zones && userDoc.zones.length
-      ? "Caretaker • Zones: " + userDoc.zones.join(", ")
-      : "Caretaker";
-    document.getElementById("caretakerZoneLabel").textContent = zonesLabel;
+    try {
+      // Load caretaker profile
+      const doc = await db.collection("users").doc(user.uid).get();
+      userDoc = doc.data() || {};
 
-    // Pre-fill zone filters
-    const filterZone = document.getElementById("filterZone");
-    const mapFilterZone = document.getElementById("mapFilterZone");
-    if (userDoc.zones && userDoc.zones.length) {
-      userDoc.zones.forEach(z => {
-        const opt1 = document.createElement("option");
-        opt1.value = z;
-        opt1.textContent = z;
-        filterZone.appendChild(opt1);
-        const opt2 = opt1.cloneNode(true);
-        mapFilterZone.appendChild(opt2);
-      });
+      // Set avatar
+      const initials = (userDoc.displayName || user.email || "CT")
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+      document.getElementById("caretakerAvatar").textContent = initials;
+
+      // Auto-detect zone
+      caretakerZoneId = userDoc.zoneId || (Array.isArray(userDoc.zones) && userDoc.zones[0]) || null;
+
+      if (!caretakerZoneId) {
+        document.getElementById("caretakerZoneLabel").textContent = "No zone assigned";
+        document.getElementById("treesGrid").innerHTML = '<div class="loading" style="color:orange;">No zone assigned to this caretaker.</div>';
+        return;
+      }
+
+      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • Zone: ${caretakerZoneId}`;
+      document.getElementById("zoneDisplayName").textContent = caretakerZoneId;
+
+      // Load trees
+      await loadZoneTrees();
+    } catch (err) {
+      console.error(err);
+      alert("Error loading caretaker data: " + err.message);
     }
-
-    loadTodayTasks();
-    loadRecentInspections();
-    // TODO: integrate Google Maps; for now we just leave placeholder
   });
 
-  // Load today's tasks for this caretaker
-  async function loadTodayTasks() {
-    const tbody = document.getElementById("tasksTbody");
-    tbody.innerHTML = "";
-    document.getElementById("tasksSubtitle").textContent = "Loading tasks…";
-
-    const todayStart = new Date();
-    todayStart.setHours(0,0,0,0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23,59,59,999);
-
-    let q = db.collection("tasks")
-      .where("caretakerId", "==", currentUser.uid)
-      .where("dueDate", ">=", todayStart.toISOString())
-      .where("dueDate", "<=", todayEnd.toISOString())
-      .orderBy("dueDate", "asc");
-
-    const zoneFilter = document.getElementById("filterZone").value;
-    const priorityFilter = document.getElementById("filterPriority").value;
-    const statusFilter = document.getElementById("filterStatus").value;
-
-    // Additional filters will be applied client-side for simplicity
-    const snap = await q.get();
-    let tasks = [];
-    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
-
-    if (zoneFilter) tasks = tasks.filter(t => t.zoneId === zoneFilter);
-    if (priorityFilter) tasks = tasks.filter(t => t.priority === priorityFilter);
-    if (statusFilter) tasks = tasks.filter(t => t.status === statusFilter);
-
-    if (!tasks.length) {
-      document.getElementById("noTasksMessage").style.display = "block";
-      document.getElementById("tasksSubtitle").textContent = "No tasks for today";
-      document.getElementById("statOpenTasks").textContent = "0";
-      return;
-    }
-    document.getElementById("noTasksMessage").style.display = "none";
-    document.getElementById("tasksSubtitle").textContent = tasks.length + " task(s) today";
-
-    let openCount = 0;
-    tbody.innerHTML = tasks.map(t => {
-      if (t.status !== "done") openCount++;
-      const due = t.dueDate ? formatDate(new Date(t.dueDate)) : "-";
-      const zoneLabel = t.zoneId || "-";
-      const treeLabel = t.treeCommonName || "Tree";
-      return `
-        <tr>
-          <td>${t.type || "Inspection"}</td>
-          <td>${treeLabel}<br><span style="font-size:11px;color:#777;">${zoneLabel}</span></td>
-          <td>${priorityBadge(t.priority || "medium")}</td>
-          <td>${statusBadge(t.status || "pending")}</td>
-          <td>${due}</td>
-          <td><button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="openTask('${t.id}')">Open</button></td>
-        </tr>
-      `;
-    }).join("");
-
-    document.getElementById("statOpenTasks").textContent = openCount.toString();
-  }
-
-  // Load recent inspections (last 7 days)
-  async function loadRecentInspections() {
-    const container = document.getElementById("inspectionsList");
-    container.innerHTML = "";
-
-    const now = new Date();
-    const weekAgo = new Date();
-    weekAgo.setDate(now.getDate() - 7);
-
-    const snap = await db.collection("inspections")
-      .where("caretakerId", "==", currentUser.uid)
-      .where("inspectionDate", ">=", weekAgo.toISOString())
-      .orderBy("inspectionDate", "desc")
-      .limit(10)
-      .get();
-
-    let inspections = [];
-    snap.forEach(doc => inspections.push({ id: doc.id, ...doc.data() }));
-
-    document.getElementById("statInspectionsToday").textContent =
-      inspections.filter(i => {
-        const d = new Date(i.inspectionDate);
-        return d.toDateString() === new Date().toDateString();
-      }).length.toString();
-
-    if (!inspections.length) {
-      container.innerHTML = '<div style="font-size:13px;color:#777;">No inspections in the last 7 days.</div>';
-      return;
-    }
-
-    container.innerHTML = inspections.map(i => {
-      const date = formatDate(new Date(i.inspectionDate));
-      const treeLabel = i.treeCommonName || "Tree";
-      const zoneLabel = i.zoneId || "-";
-      const health = i.healthStatus || "fair";
-      return `
-        <div class="inspection-item">
-          <div class="inspection-main">
-            <div>${treeLabel}</div>
-            <div class="inspection-meta">${date} • ${zoneLabel}</div>
-          </div>
-          <div>${healthChip(health)}</div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  // Handlers for filters
-  document.getElementById("filterZone").addEventListener("change", loadTodayTasks);
-  document.getElementById("filterPriority").addEventListener("change", loadTodayTasks);
-  document.getElementById("filterStatus").addEventListener("change", loadTodayTasks);
-
-  // Placeholder handlers for quick actions
-  document.getElementById("btnLogInspection").addEventListener("click", () => {
-    alert("Open 'Log inspection' form (hook to your modal).");
+  // -------- Event listeners --------
+  document.getElementById("btnScanQR").addEventListener("click", openQRModal);
+  document.getElementById("btnViewHistory").addEventListener("click", () => {
+    alert("History view: Shows your recent tree health updates (tree_logs collection).");
   });
-  document.getElementById("btnReportHazard").addEventListener("click", () => {
-    alert("Open 'Report hazard' form.");
-  });
-  document.getElementById("btnMyZones").addEventListener("click", () => {
-    alert("Navigate to 'My zones' page / section.");
+  document.getElementById("btnLogout").addEventListener("click", () => {
+    auth.signOut().then(() => {
+      window.location.href = "index.html";
+    });
   });
 
-  // Open a specific task (you can show modal or navigate)
-  function openTask(taskId) {
-    alert("Open task details: " + taskId);
-    // TODO: implement side panel / modal with full task + quick inspection form
-  }
+  document.getElementById("filterSearch").addEventListener("input", renderTrees);
+  document.getElementById("filterHealth").addEventListener("change", renderTrees);
+
+  // Handle QR input enter key
+  document.getElementById("qrInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") handleQRInput();
+  });
+
+  // Expose functions globally for inline onclick
+  window.openTreeHealthModal = openTreeHealthModal;
+  window.closeHealthModal = closeHealthModal;
+  window.saveTreeHealth = saveTreeHealth;
+  window.closeQRModal = closeQRModal;
+  window.handleQRInput = handleQRInput;
+  window.handleTreeHealthClick = handleTreeHealthClick;
 </script>
+
+<script src="app.js"></script>
+
 </body>
 </html>
