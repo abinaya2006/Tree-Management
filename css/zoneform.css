@@ -1,3 +1,11 @@
+#treemodal{
+    display:none
+}
+
+#treemodal.active{
+    display:block;
+}
+
 #caremodal{
     display: none;
 }
@@ -82,7 +90,7 @@
     .modal-body {
         padding: 25px;
         max-height: 600px;
-        overflow-y: auto;
+        /* overflow-y: auto; */
     }
     
     .modal-footer {
@@ -111,6 +119,7 @@
     }
     
     .form-group input[type="text"],
+    .form-group input[type="number"],
     .form-group input[type="email"],
     .form-group input[type="date"],
     .form-group select,
@@ -125,6 +134,7 @@
     }
     
     .form-group input[type="text"]:focus,
+    .form-group input[type="number"]:focus,
     .form-group input[type="email"]:focus,
     .form-group input[type="date"]:focus,
     .form-group select:focus,

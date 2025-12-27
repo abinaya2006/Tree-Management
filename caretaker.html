@@ -385,8 +385,9 @@
       </div>
     </div>
     <div class="quick-actions">
-      <button class="btn btn-primary" id="btnScanQR">📱 Scan QR Code</button>
-      <button class="btn btn-secondary" id="btnViewHistory">📋 Update History</button>
+      <button class="btn btn-secondary" id="btnScanQR">Scan Qr</button>
+
+      <button class="btn btn-secondary" id="btnViewHistory"> Update History</button>
     </div>
   </div>
 
@@ -517,6 +518,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
 
 <script>
   // Firebase config
@@ -535,12 +538,16 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+
   // State
   let currentUser = null;
   let userDoc = null;
   let caretakerZoneId = null;
+  let userCollege = null;
   let allTrees = [];
   let currentEditingTreeId = null;
+  let zoneMap = {};
+
 
   // -------- Helpers --------
   function formatDate(date) {
@@ -565,6 +572,34 @@
     if (health === "dying") return "⚫";
     return "⚪";
   }
+
+   async function loadZonesMap() {
+    if (!userCollege) {
+      console.error("userCollege is not set yet");
+      return;
+    }
+    
+    try {
+      console.log("Loading zones for college:", userCollege);
+      const snap = await db.collection("zones")
+        .where("collegeId", "==", userCollege)
+        .get();
+
+      console.log("Zones found:", snap.size);
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        console.log(`Zone ${doc.id}:`, data.name);
+        zoneMap[doc.id] = data.name || "Unnamed Zone";
+      });
+      
+      return zoneMap;
+    } catch (err) {
+      console.error("Error loading zones:", err);
+      return {};
+    }
+  }
+
 
   // -------- Tree health update modal --------
   async function openTreeHealthModal(tree) {
@@ -650,10 +685,14 @@
     await openTreeHealthModal(foundTree);
   }
 
+  
+
+
   // -------- Load zone trees --------
   async function loadZoneTrees() {
     if (!caretakerZoneId) {
       allTrees = [];
+      renderTrees() //hmmm
       return;
     }
 
@@ -664,8 +703,15 @@
         .get();
       
       allTrees = [];
-      snap.forEach((doc) => allTrees.push({ id: doc.id, ...doc.data() }));
-      
+     snap.forEach((doc) => {
+        const data = doc.data();
+        allTrees.push({ 
+          id: doc.id, 
+          ...data,
+          zoneId: data.zoneId || caretakerZoneId
+        });
+      });
+
       renderTrees();
       updateStatsAndKPIs();
     } catch (err) {
@@ -702,11 +748,13 @@
     grid.innerHTML = filtered.map(tree => `
       <div class="tree-card">
         <div class="tree-card-header">
-          <div class="tree-card-id">${tree.treeId || tree.id}</div>
+          <div class="tree-card-id">${tree.commonName || "Unknown"}</div>
+          <img src="qr-icon.svg" class="qr-icon" onclick="showTreeQR('${tree.qrUrl}')">
+
           <div class="health-emoji">${healthEmoji(tree.healthStatus)}</div>
         </div>
         <div class="tree-card-meta">
-          <strong>${tree.commonName || "Unknown"}</strong>
+          <strong>${tree.treeId || tree.id}</strong>
           ${tree.scientificName ? `<span style="font-size:10px;color:#999;">${tree.scientificName}</span>` : ""}
           <div style="margin-top:6px;">
             Health: <strong>${tree.healthStatus || "unknown"}</strong>
@@ -730,6 +778,7 @@
     }
   }
 
+  
   function updateStatsAndKPIs() {
     const stats = {
       healthy: 0,
@@ -769,6 +818,8 @@
       // Load caretaker profile
       const doc = await db.collection("users").doc(user.uid).get();
       userDoc = doc.data() || {};
+      userCollege = userDoc.collegeId;
+
 
       // Set avatar
       const initials = (userDoc.displayName || user.email || "CT")
@@ -779,6 +830,8 @@
         .slice(0, 2);
       document.getElementById("caretakerAvatar").textContent = initials;
 
+      
+
       // Auto-detect zone
       caretakerZoneId = userDoc.zoneId || (Array.isArray(userDoc.zones) && userDoc.zones[0]) || null;
 
@@ -788,11 +841,15 @@
         return;
       }
 
-      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • Zone: ${caretakerZoneId}`;
-      document.getElementById("zoneDisplayName").textContent = caretakerZoneId;
+      await loadZonesMap();
+      zoneName = zoneMap[caretakerZoneId] || "Zone " + caretakerZoneId.substring(0, 8);
+
+      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • Zone: ${zoneName }`;
+      document.getElementById("zoneDisplayName").textContent = zoneName;
 
       // Load trees
       await loadZoneTrees();
+      
     } catch (err) {
       console.error(err);
       alert("Error loading caretaker data: " + err.message);

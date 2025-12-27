@@ -1,4 +1,5 @@
 
+let zoneList = {};
 
 // REPLACE WITH YOUR FIREBASE CONFIG
 const firebaseConfig = {
@@ -6,6 +7,7 @@ const firebaseConfig = {
     authDomain: "try-firebase-bdb77.firebaseapp.com",
     projectId: "try-firebase-bdb77",
     storageBucket: "try-firebase-bdb77.firebasestorage.app",
+    // storageBucket: "try-firebase-bdb77.appspot.com",
     messagingSenderId: "327656427702",
     appId: "1:327656427702:web:c2bf0fff68d18460029617",
     measurementId: "G-KWBQWMT4GJ"
@@ -14,6 +16,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
+
+let treeUrl;
 
 let currentUser = null;
 let userRole = null;
@@ -106,7 +111,8 @@ auth.onAuthStateChanged(async (user) => {
             }
 
             loadStats();
-            loadZonesForDropdown()
+            await loadZonesForDropdown()
+            await viewAllTrees()
         }
     } else {
         currentUser = null;
@@ -132,45 +138,58 @@ async function loadStats() {
     document.getElementById('needsCareTrees').textContent = needsCare;
 }
 
-// ADD TREE
-async function showAddTreeForm() {
-    const name = prompt('Common Name (e.g., Oak):');
-    const genus = prompt('Genus (e.g., Quercus):');
-    const species = prompt('Species (e.g., alba):');
-    const dbh = parseFloat(prompt('DBH in cm:'));
-    const height = parseFloat(prompt('Height in m:'));
+async function addTree() {
+    
+    const name = document.getElementById('treeName').value
+    const genus = document.getElementById('genus').value
+    const species = document.getElementById('species').value
+    const dbh = document.getElementById('dbh').value
+    const height = document.getElementById('height').value
+    const count = document.getElementById('count').value
+    const zoneId = document.getElementById('zoneSelect').value
 
-    if (name && genus && species && dbh && height) {
+
+    
+
+    if (name && count && zoneId) {
         try {
-            await db.collection('trees').add({
+            const treeRef = await db.collection('trees').add({
                 collegeId: userCollege,
                 commonName: name,
                 genus, species, dbh, height,
-                ageClass: 'mature',
+                zoneId:zoneId,
+                // ageClass: 'mature',
                 healthStatus: 'healthy',
-                healthScore: 85,
+                healthScore: 100,
                 location: { lat: 40.599, lng: -75.290 },
                 createdBy: currentUser.uid,
                 createdAt: new Date().toISOString()
             });
+    
+            
             alert('✓ Tree added!');
+            closeTreeModal()
             loadStats();
         } catch (error) {
+                console.error("Firestore error:", error);
             alert('Error: ' + error.message);
         }
     }
 }
 
+
+
+
 // VIEW ALL TREES
 async function viewAllTrees() {
     const snapshot = await db.collection('trees').where('collegeId', '==', userCollege).get();
     
-    let html = '<h2>All Trees</h2><table><thead><tr><th>Name</th><th>Species</th><th>Health</th><th>DBH</th></tr></thead><tbody>';
+    let html = '<h2>All Trees</h2><table><thead><tr><th>Name</th><th>Species</th><th>Zone</th><th>Health</th><th>DBH</th><th>Option</th></tr></thead><tbody>';
     
     snapshot.forEach(doc => {
         const tree = doc.data();
         const healthColor = tree.healthStatus === 'healthy' ? 'green' : tree.healthStatus === 'fair' ? 'orange' : 'red';
-        html += `<tr><td>${tree.commonName}</td><td>${tree.genus} ${tree.species}</td><td style="color:${healthColor};">${tree.healthStatus}</td><td>${tree.dbh}</td></tr>`;
+        html += `<tr><td>${tree.commonName}</td><td>${tree.genus} ${tree.species}</td><td>${zoneList[tree.zoneId] }</td><td style="color:${healthColor};">${tree.healthStatus}</td><td>${tree.dbh}</td><td><button>Edit</button></td></tr>`;
     });
     
     html += '</tbody></table>';
@@ -222,6 +241,7 @@ async function loadZonesForDropdown() {
 
         snapshot.forEach(doc => {
             const zone = doc.data();
+            zoneList[doc.id] = doc.data().name;
             const option = document.createElement('option');
             option.value = doc.id; // you can store the zone document ID
             option.textContent = zone.name;
@@ -318,4 +338,15 @@ function showAddCare() {
 
 function closeCareModal() {
     document.getElementById("caremodal").classList.remove("active");
+}
+
+function showAddTree() {
+    document.getElementById("treemodal").classList.add("active");
+
+}
+
+
+
+function closeTreeModal() {
+    document.getElementById("treemodal").classList.remove("active");
 }
