@@ -610,364 +610,713 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
+<!-- Add this line right before the closing </head> tag -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
 <script>
   // Initialize Firebase
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
+  authDomain: "try-firebase-bdb77.firebaseapp.com",
+  projectId: "try-firebase-bdb77",
+  storageBucket: "try-firebase-bdb77.firebasestorage.app",
+  messagingSenderId: "327656427702",
+  appId: "1:327656427702:web:c2bf0fff68d18460029617",
+  measurementId: "G-KWBQWMT4GJ"
+};
 
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
-    authDomain: "try-firebase-bdb77.firebaseapp.com",
-    projectId: "try-firebase-bdb77",
-    storageBucket: "try-firebase-bdb77.firebasestorage.app",
-    messagingSenderId: "327656427702",
-    appId: "1:327656427702:web:c2bf0fff68d18460029617",
-    measurementId: "G-KWBQWMT4GJ"
-  };
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  // Global state
-  let currentUser = null;
-  let userCollege = "college_123";
-  let allTrees = [];
-  let selectedTree = null;
-  let zoneMap={}
+// Global state
+let currentUser = null;
+let userCollege = null;
+let allTrees = [];
+let selectedTree = null;
+let zoneMap = {};
 
-  // Initialize
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      alert('Please log in first');
-      window.location.href = 'index.html';
-      return;
-    }
-
-    currentUser = user;
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    const userData = userDoc.data() || {};
-    userCollege = userData.collegeId || 'college_123';
-
-    document.getElementById('collegeLabel').textContent = userData.collegeName || 'Your College';
-    document.getElementById('userInfo').textContent = userData.displayName || user.email;
-
-    loadTrees();
-  });
-
-  // Load all trees for college
-  async function loadTrees() {
-    try {
-      const snapshot = await db.collection('trees')
-        .where('collegeId', '==', userCollege)
-        .orderBy('commonName', 'asc')
-        .get();
-
-      allTrees = [];
-      snapshot.forEach(doc => {
-        allTrees.push({ id: doc.id, ...doc.data() });
-      });
-
-      renderTreeList(allTrees);
-    } catch (error) {
-      console.error('Error loading trees:', error);
-      document.getElementById('treeList').innerHTML = '<div style="color: #f00; padding: 20px;">Error loading trees</div>';
-    }
-  }
-
-  // Render tree list
-  function renderTreeList(trees) {
-    const container = document.getElementById('treeList');
-
-    if (!trees.length) {
-      container.innerHTML = '<div style="color: #999; padding: 20px; text-align: center;">No trees found</div>';
-      return;
-    }
-
-    container.innerHTML = trees.map(tree => `
-      <div class="tree-item ${selectedTree?.id === tree.id ? 'active' : ''}" onclick="selectTree('${tree.id}')">
-        <div class="tree-item-name">${tree.commonName || 'Unknown'}</div>
-        <div class="tree-item-meta">${tree.species || ''} • ${tree.zoneId || 'No zone'}</div>
-      </div>
-    `).join('');
-  }
-
-  // Search trees
-  document.getElementById('searchBox').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    const filtered = allTrees.filter(tree =>
-      tree.commonName.toLowerCase().includes(query) ||
-      (tree.species && tree.species.toLowerCase().includes(query))
-    );
-    renderTreeList(filtered);
-  });
-
-  // Select tree and show details
-  async function selectTree(treeId) {
-    const tree = allTrees.find(t => t.id === treeId);
-    if (!tree) return;
-
-    selectedTree = tree;
-
-    // Fetch caretaker info
-    let caretakerName = 'Not assigned';
-    try {
-      const assignmentSnap = await db.collection('users')
-        .where('collegeId', '==', userCollege)
-        .where('zoneId', '==', tree.zoneId)
-        // .where('isActive', '==', true)
-        .limit(1)
-        .get();
-
-      if (!assignmentSnap.empty) {
-        assignmentSnap.forEach(doc => {
-            caretakerName = doc.data().name;
-            });
-
-      }
-    } catch (error) {
-      console.error('Error fetching caretaker:', error);
-    }
-
-    // Render details
-    const healthStatusClass = `status-${tree.healthStatus || 'fair'}`;
-    await loadZonesMap();
-    zoneName = zoneMap[tree.zoneId] || "Zone " + tree.zoneId.substring(0, 8);
-    const detailsHTML = `
-      <div class="card-header">
-        <div class="header-content">
-          <h1>${tree.commonName || 'Unknown Tree'}</h1>
-          <p>${tree.species || ''}</p>
-        </div>
-        ${tree.qrCodeDataUrl ? `
-          <div class="qr-code-container">
-            <img src="${tree.qrCodeDataUrl}" alt="QR Code">
-          </div>
-        ` : ''}
-      </div>
-
-      <div class="card-body">
-        <div class="details-grid">
-          <div class="detail-item">
-            <div class="detail-label">Common Name</div>
-            <div class="detail-value">${tree.commonName || '-'}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Species</div>
-            <div class="detail-value">${tree.species || '-'}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Genus</div>
-            <div class="detail-value">${tree.genus || '-'}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">DBH (cm)</div>
-            <div class="detail-value">${tree.dbh || '-'}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Height (m)</div>
-            <div class="detail-value">${tree.height || '-'}</div>
-          </div>
-
-        
-
-
-          <div class="detail-item">
-            <div class="detail-label">Zone</div>
-            <div class="detail-value">${zoneName}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Caretaker</div>
-            <div class="detail-value">${caretakerName}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Health Status</div>
-            <div class="detail-value ${healthStatusClass}">${tree.healthStatus || 'Unknown'}</div>
-          </div>
-        </div>
-
-        ${tree.notes ? `
-          <div class="notes-section">
-            <div class="notes-label">Notes</div>
-            <div class="notes-text">${tree.notes}</div>
-          </div>
-        ` : ''}
-
-        <div class="action-buttons">
-          <button class="btn btn-primary" onclick="openObservationModal()">
-            📝 Submit Observation
-          </button>
-          <button class="btn btn-secondary" onclick="downloadQRCode()">
-            ⬇️ Download QR Code
-          </button>
-        </div>
-      </div>
+// Check URL for treeId on page load
+window.addEventListener('DOMContentLoaded', async function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const treeIdFromUrl = urlParams.get('treeId');
+  
+  if (treeIdFromUrl) {
+    // Show loading message
+    document.getElementById('emptyState').innerHTML = `
+      <div class="empty-state-icon">🌲</div>
+      <div class="empty-state-text">Loading tree details...</div>
     `;
-
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('treeDetailContent').innerHTML = detailsHTML;
-    document.getElementById('treeDetailContent').style.display = 'block';
-
-    // Update list highlight
-    document.querySelectorAll('.tree-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    event.target.closest('.tree-item')?.classList.add('active');
+    
+    // Load tree directly from URL
+    await loadTreeFromUrl(treeIdFromUrl);
   }
+  
+  // Initialize auth listener
+  initAuth();
+});
 
-  //zonename Load
-  async function loadZonesMap() {
-    if (!userCollege) {
-      console.error("userCollege is not set yet");
+// Initialize authentication
+async function initAuth() {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      // User is logged in
+      currentUser = user;
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      const userData = userDoc.data() || {};
+      userCollege = userData.collegeId;
+      
+      document.getElementById('collegeLabel').textContent = userData.collegeName || 'College';
+      document.getElementById('userInfo').textContent = userData.displayName || user.email;
+      
+      // Load trees for logged in user
+      await loadTrees();
+      
+      // Check if there's a treeId in URL that hasn't been loaded yet
+      const urlParams = new URLSearchParams(window.location.search);
+      const treeIdFromUrl = urlParams.get('treeId');
+      if (treeIdFromUrl && (!selectedTree || selectedTree.id !== treeIdFromUrl)) {
+        await selectTree(treeIdFromUrl);
+      }
+    } else {
+      // User is not logged in
+      document.getElementById('collegeLabel').textContent = 'Public View';
+      document.getElementById('userInfo').innerHTML = `
+        <button onclick="window.location.href='index.html'" 
+                style="padding: 5px 10px; background: #2c5f2d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Login
+        </button>
+      `;
+      
+      // If there's a treeId in URL, it's already loaded
+      // If not, show empty state
+      const urlParams = new URLSearchParams(window.location.search);
+      const treeIdFromUrl = urlParams.get('treeId');
+      if (!treeIdFromUrl && !selectedTree) {
+        document.getElementById('emptyState').innerHTML = `
+          <div class="empty-state-icon">🌳</div>
+          <div class="empty-state-text">Select a tree to view details</div>
+          <div style="font-size: 12px; color: #bbb;">Login to see all trees</div>
+        `;
+      }
+    }
+  });
+}
+
+// Load tree directly from URL (works without login)
+async function loadTreeFromUrl(treeId) {
+  try {
+    // Get tree from Firestore
+    const treeDoc = await db.collection('trees').doc(treeId).get();
+    
+    if (!treeDoc.exists) {
+      document.getElementById('emptyState').innerHTML = `
+        <div class="empty-state-icon">❌</div>
+        <div class="empty-state-text">Tree not found</div>
+        <div style="font-size: 12px; color: #bbb;">Tree ID: ${treeId.substring(0, 12)}...</div>
+      `;
       return;
     }
     
-    try {
-      console.log("Loading zones for college:", userCollege);
-      const snap = await db.collection("zones")
-        .where("collegeId", "==", userCollege)
-        .get();
-
-      console.log("Zones found:", snap.size);
-      
-      snap.forEach(doc => {
-        const data = doc.data();
-        console.log(`Zone ${doc.id}:`, data.name);
-        zoneMap[doc.id] = data.name || "Unnamed Zone";
-      });
-      
-      return zoneMap;
-    } catch (err) {
-      console.error("Error loading zones:", err);
-      return {};
+    const tree = { id: treeDoc.id, ...treeDoc.data() };
+    selectedTree = tree;
+    
+    // Get college info for this tree
+    userCollege = tree.collegeId;
+    
+    // Update college label
+    const collegeDoc = await db.collection('colleges').doc(userCollege).get();
+    if (collegeDoc.exists) {
+      document.getElementById('collegeLabel').textContent = collegeDoc.data().name || 'College';
     }
+    
+    // Load zones for this college
+    await loadZonesMap();
+    
+    // Display the tree
+    await displayTreeDetails(tree);
+    
+  } catch (error) {
+    console.error('Error loading tree from URL:', error);
+    document.getElementById('emptyState').innerHTML = `
+      <div class="empty-state-icon">⚠️</div>
+      <div class="empty-state-text">Error loading tree</div>
+      <div style="font-size: 12px; color: #bbb;">${error.message}</div>
+    `;
   }
-
-
-  // Open observation modal
-  function openObservationModal() {
-    if (!selectedTree) {
-      alert('Please select a tree first');
-      return;
-    }
-    document.getElementById('observationForm').reset();
-    document.getElementById('observationModal').style.display = 'block';
-  }
-
-  // Close observation modal
-  function closeObservationModal() {
-    document.getElementById('observationModal').style.display = 'none';
-  }
-
-  // Submit observation
-  async function submitObservation() {
-    const btn = document.getElementById('submitObservationBtn');
-    btn.disabled = true;
-    btn.textContent = 'Submitting...';
-
-    try {
-        // Get form values
-        const observation = {
-            collegeId: userCollege,
-            treeId: selectedTree.id,
-            treeName: selectedTree.commonName,
-            treeZone: selectedTree.zoneId,
-            observerName: document.getElementById('observerName').value,
-            observerType: document.getElementById('observerType').value,
-            observationType: document.getElementById('observationType').value,
-            details: document.getElementById('observationDetails').value,
-            severity: document.getElementById('severityLevel').value,
-            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'pending',
-            assignedTo: null,
-            assignedToName: null
-        };
-
-        // Find caretaker for this zone
-        const caretakerQuery = await db.collection('users')
-            .where('collegeId', '==', userCollege)
-            .where('zoneId', '==', selectedTree.zoneId)
-            .where('role', '==', 'caretaker')
-            .limit(1)
-            .get();
-
-        let caretakerInfo = null;
-        
-        if (!caretakerQuery.empty) {
-            const caretakerDoc = caretakerQuery.docs[0];
-            const caretakerData = caretakerDoc.data();
-            
-            caretakerInfo = {
-                id: caretakerDoc.id,
-                name: caretakerData.displayName || caretakerData.name || 'Caretaker'
-            };
-            
-            observation.assignedTo = caretakerInfo.id;
-            observation.assignedToName = caretakerInfo.name;
-        }
-
-        // Save observation
-        const obsRef = await db.collection('observations').add(observation);
-
-        // Create notification for caretaker if found
-        if (caretakerInfo) {
-            await db.collection('notifications').add({
-                userId: caretakerInfo.id,
-                type: 'observation',
-                title: `New observation for ${observation.treeName}`,
-                message: `A ${observation.severity} severity observation was submitted by ${observation.observerName}`,
-                treeId: observation.treeId,
-                observationId: obsRef.id,
-                read: false,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                zoneId: observation.treeZone
-            });
-        }
-
-        // Success message
-        const successMsg = caretakerInfo 
-            ? `✓ Observation submitted!\nAssigned to: ${caretakerInfo.name}`
-            : `✓ Observation submitted!\n⚠️ No caretaker assigned - will be handled by admin`;
-        
-        alert(successMsg);
-        closeObservationModal();
-
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error: ' + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Submit Observation';
-    }
 }
 
-  // Download QR code
-  function downloadQRCode() {
-    if (!selectedTree?.qrCodeDataUrl) {
-      alert('QR code not available for this tree');
+// Load all trees for college (only for logged in users)
+async function loadTrees() {
+  if (!userCollege) return;
+  
+  try {
+    const snapshot = await db.collection('trees')
+      .where('collegeId', '==', userCollege)
+      .orderBy('commonName', 'asc')
+      .get();
+    
+    allTrees = [];
+    snapshot.forEach(doc => {
+      allTrees.push({ id: doc.id, ...doc.data() });
+    });
+    
+    renderTreeList(allTrees);
+    
+    // If tree is selected from URL but not in our list, still show it
+    const urlParams = new URLSearchParams(window.location.search);
+    const treeIdFromUrl = urlParams.get('treeId');
+    if (treeIdFromUrl && (!selectedTree || selectedTree.id !== treeIdFromUrl)) {
+      const tree = allTrees.find(t => t.id === treeIdFromUrl);
+      if (tree) {
+        await selectTree(treeIdFromUrl);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading trees:', error);
+  }
+}
+
+// Render tree list
+function renderTreeList(trees) {
+  const container = document.getElementById('treeList');
+  
+  if (!trees.length) {
+    container.innerHTML = '<div style="color: #999; padding: 20px; text-align: center;">No trees found</div>';
+    return;
+  }
+  
+  container.innerHTML = trees.map(tree => `
+    <div class="tree-item ${selectedTree?.id === tree.id ? 'active' : ''}" onclick="selectTree('${tree.id}')">
+      <div class="tree-item-name">${tree.commonName || 'Unknown'}</div>
+      <div class="tree-item-meta">${tree.species || ''} • ${tree.zoneId || 'No zone'}</div>
+    </div>
+  `).join('');
+}
+
+// Search trees
+document.getElementById('searchBox').addEventListener('input', (e) => {
+  const query = e.target.value.toLowerCase();
+  const filtered = allTrees.filter(tree =>
+    tree.commonName.toLowerCase().includes(query) ||
+    (tree.species && tree.species.toLowerCase().includes(query))
+  );
+  renderTreeList(filtered);
+});
+
+// Select tree and show details
+async function selectTree(treeId) {
+  // Update URL with treeId
+  const newUrl = `${window.location.pathname}?treeId=${treeId}`;
+  window.history.pushState({}, '', newUrl);
+  
+  let tree;
+  
+  // Find tree in loaded list or load it directly
+  if (allTrees.length > 0) {
+    tree = allTrees.find(t => t.id === treeId);
+  }
+  
+  if (!tree) {
+    try {
+      const treeDoc = await db.collection('trees').doc(treeId).get();
+      if (treeDoc.exists) {
+        tree = { id: treeDoc.id, ...treeDoc.data() };
+        if (!userCollege) {
+          userCollege = tree.collegeId;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading tree:', error);
       return;
     }
-
-    const link = document.createElement('a');
-    link.href = selectedTree.qrCodeDataUrl;
-    link.download = `qr_${selectedTree.commonName}.png`;
-    link.click();
   }
+  
+  if (!tree) return;
+  
+  selectedTree = tree;
+  
+  // Display tree details
+  await displayTreeDetails(tree);
+  
+  // Update list highlight if we have a list
+  if (allTrees.length > 0) {
+    document.querySelectorAll('.tree-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    const treeItem = document.querySelector(`.tree-item[onclick*="${treeId}"]`);
+    if (treeItem) treeItem.classList.add('active');
+  }
+}
 
-  // Close modal on outside click
-  window.addEventListener('click', (e) => {
-    const modal = document.getElementById('observationModal');
-    if (e.target === modal) {
-      closeObservationModal();
+// Display tree details
+async function displayTreeDetails(tree) {
+  // Fetch caretaker info
+  let caretakerName = 'Not assigned';
+  try {
+    const assignmentSnap = await db.collection('users')
+      .where('collegeId', '==', tree.collegeId)
+      .where('zoneId', '==', tree.zoneId)
+      .limit(1)
+      .get();
+    
+    if (!assignmentSnap.empty) {
+      assignmentSnap.forEach(doc => {
+        caretakerName = doc.data().name || 'Caretaker';
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching caretaker:', error);
+  }
+  
+  // Fetch zone name
+  await loadZonesMap();
+  const zoneName = zoneMap[tree.zoneId] || "Zone " + tree.zoneId.substring(0, 8);
+  
+  // Generate QR code with the current URL
+  const currentUrl = window.location.href;
+  const qrDataUrl = await generateQRCodeWithUrl(currentUrl);
+  
+  // Create QR code HTML
+  const qrCodeHtml = `
+    <div class="qr-code-container" id="qrCodeContainer-${tree.id}">
+      <img src="${qrDataUrl}" 
+           alt="QR Code for ${tree.commonName}" 
+           style="width: 100%; height: 100%; object-fit: contain;"
+           id="qrImage-${tree.id}">
+    </div>
+  `;
+  
+  // Render details
+  const healthStatusClass = `status-${tree.healthStatus || 'fair'}`;
+  
+  const detailsHTML = `
+    <div class="card-header">
+      <div class="header-content">
+        <h1>${tree.commonName || 'Unknown Tree'}</h1>
+        <p>${tree.species || ''}</p>
+      </div>
+      ${qrCodeHtml}
+    </div>
+    
+    <div class="card-body">
+      <div class="details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Common Name</div>
+          <div class="detail-value">${tree.commonName || '-'}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">Species</div>
+          <div class="detail-value">${tree.species || '-'}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">Genus</div>
+          <div class="detail-value">${tree.genus || '-'}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">DBH (cm)</div>
+          <div class="detail-value">${tree.dbh || '-'}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">Height (m)</div>
+          <div class="detail-value">${tree.height || '-'}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">Zone</div>
+          <div class="detail-value">${zoneName}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">Caretaker</div>
+          <div class="detail-value">${caretakerName}</div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-label">Health Status</div>
+          <div class="detail-value ${healthStatusClass}">${tree.healthStatus || 'Unknown'}</div>
+        </div>
+      </div>
+      
+      ${tree.notes ? `
+        <div class="notes-section">
+          <div class="notes-label">Notes</div>
+          <div class="notes-text">${tree.notes}</div>
+        </div>
+      ` : ''}
+      
+      <div class="action-buttons">
+        ${currentUser ? `
+          <button class="btn btn-primary" onclick="openObservationModal()">
+            📝 Submit Observation
+          </button>
+        ` : ''}
+        <button class="btn btn-secondary" onclick="downloadQRCode('${tree.id}', '${tree.commonName || 'tree'}')">
+          ⬇️ Download QR Code
+        </button>
+        <button class="btn btn-secondary" onclick="shareTreeLink('${tree.id}')">
+          🔗 Share Link
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('treeDetailContent').innerHTML = detailsHTML;
+  document.getElementById('treeDetailContent').style.display = 'block';
+}
+
+// Generate QR code with URL
+async function generateQRCodeWithUrl(url) {
+  return new Promise((resolve, reject) => {
+    try {
+      console.log('Generating QR for URL:', url);
+      
+      if (typeof QRCode !== 'undefined') {
+        const tempDiv = document.createElement('div');
+        tempDiv.style.display = 'none';
+        document.body.appendChild(tempDiv);
+        
+        const qrcode = new QRCode(tempDiv, {
+          text: url,
+          width: 150,
+          height: 150,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        
+        setTimeout(() => {
+          const img = tempDiv.querySelector('img');
+          if (img && img.src) {
+            resolve(img.src);
+          } else {
+            const canvas = tempDiv.querySelector('canvas');
+            if (canvas) {
+              resolve(canvas.toDataURL('image/png'));
+            } else {
+              // Fallback to Google Charts API
+              const qrSize = 150;
+              const googleQRUrl = `https://chart.googleapis.com/chart?chs=${qrSize}x${qrSize}&cht=qr&chl=${encodeURIComponent(url)}&choe=UTF-8`;
+              resolve(googleQRUrl);
+            }
+          }
+          document.body.removeChild(tempDiv);
+        }, 300);
+      } else {
+        // Use Google Charts API
+        const qrSize = 150;
+        const googleQRUrl = `https://chart.googleapis.com/chart?chs=${qrSize}x${qrSize}&cht=qr&chl=${encodeURIComponent(url)}&choe=UTF-8`;
+        resolve(googleQRUrl);
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      // Create simple fallback SVG
+      const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+        <rect width="150" height="150" fill="white" stroke="#ddd" stroke-width="1"/>
+        <text x="75" y="75" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">
+          Scan to view tree
+        </text>
+        <text x="75" y="95" font-family="Arial" font-size="10" text-anchor="middle" fill="#666">
+          ${url.substring(0, 30)}...
+        </text>
+      </svg>`;
+      resolve(fallbackSvg);
     }
   });
+}
+
+// Download QR code
+function downloadQRCode(treeId, treeName) {
+  const qrImage = document.getElementById(`qrImage-${treeId}`);
+  if (!qrImage || !qrImage.src) {
+    alert('QR code not generated yet.');
+    return;
+  }
+  
+  const link = document.createElement('a');
+  link.href = qrImage.src;
+  link.download = `tree_qr_${treeName.replace(/\s+/g, '_')}.png`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Share tree link
+function shareTreeLink(treeId) {
+  const treeUrl = `${window.location.origin}${window.location.pathname}?treeId=${treeId}`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'Tree Details',
+      text: 'Check out this tree',
+      url: treeUrl
+    });
+  } else {
+    // Copy to clipboard as fallback
+    navigator.clipboard.writeText(treeUrl).then(() => {
+      alert('Link copied to clipboard:\n' + treeUrl);
+    });
+  }
+}
+
+// Load zones map
+async function loadZonesMap() {
+  if (!userCollege) {
+    console.error("userCollege is not set yet");
+    return;
+  }
+  
+  try {
+    const snap = await db.collection("zones")
+      .where("collegeId", "==", userCollege)
+      .get();
+    
+    snap.forEach(doc => {
+      const data = doc.data();
+      zoneMap[doc.id] = data.name || "Unnamed Zone";
+    });
+    
+    return zoneMap;
+  } catch (err) {
+    console.error("Error loading zones:", err);
+    return {};
+  }
+}
+
+// Open observation modal (only for logged in users)
+function openObservationModal() {
+  if (!selectedTree) {
+    alert('Please select a tree first');
+    return;
+  }
+  
+  if (!currentUser) {
+    alert('Please login to submit observations');
+    window.location.href = 'index.html';
+    return;
+  }
+  
+  document.getElementById('observationForm').reset();
+  document.getElementById('observationModal').style.display = 'block';
+}
+
+// Close observation modal
+function closeObservationModal() {
+  document.getElementById('observationModal').style.display = 'none';
+}
+
+// Submit observation
+async function submitObservation() {
+  if (!currentUser) {
+    alert('Please login to submit observations');
+    return;
+  }
+  
+  const btn = document.getElementById('submitObservationBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  
+  try {
+    const observation = {
+      collegeId: userCollege,
+      treeId: selectedTree.id,
+      treeName: selectedTree.commonName,
+      treeZone: selectedTree.zoneId,
+      observerName: document.getElementById('observerName').value,
+      observerType: document.getElementById('observerType').value,
+      observationType: document.getElementById('observationType').value,
+      details: document.getElementById('observationDetails').value,
+      severity: document.getElementById('severityLevel').value,
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'pending',
+      assignedTo: null,
+      assignedToName: null
+    };
+    
+    // Find caretaker for this zone
+    const caretakerQuery = await db.collection('users')
+      .where('collegeId', '==', userCollege)
+      .where('zoneId', '==', selectedTree.zoneId)
+      .where('role', '==', 'caretaker')
+      .limit(1)
+      .get();
+    
+    let caretakerInfo = null;
+    
+    if (!caretakerQuery.empty) {
+      const caretakerDoc = caretakerQuery.docs[0];
+      const caretakerData = caretakerDoc.data();
+      
+      caretakerInfo = {
+        id: caretakerDoc.id,
+        name: caretakerData.displayName || caretakerData.name || 'Caretaker'
+      };
+      
+      observation.assignedTo = caretakerInfo.id;
+      observation.assignedToName = caretakerInfo.name;
+    }
+    
+    // Save observation
+    const obsRef = await db.collection('observations').add(observation);
+    
+    // Create notification for caretaker if found
+    if (caretakerInfo) {
+      await db.collection('notifications').add({
+        userId: caretakerInfo.id,
+        type: 'observation',
+        title: `New observation for ${observation.treeName}`,
+        message: `A ${observation.severity} severity observation was submitted by ${observation.observerName}`,
+        treeId: observation.treeId,
+        observationId: obsRef.id,
+        read: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        zoneId: observation.treeZone
+      });
+    }
+    
+    const successMsg = caretakerInfo 
+      ? `✓ Observation submitted!\nAssigned to: ${caretakerInfo.name}`
+      : `✓ Observation submitted!\n⚠️ No caretaker assigned - will be handled by admin`;
+    
+    alert(successMsg);
+    closeObservationModal();
+    
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error: ' + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Observation';
+  }
+}
+
+// Logout function
+function logout() {
+  auth.signOut().then(() => {
+    window.location.href = 'index.html';
+  }).catch(error => {
+    alert('Logout error: ' + error.message);
+  });
+}
+
+// Close modal on outside click
+window.addEventListener('click', (e) => {
+  const modal = document.getElementById('observationModal');
+  if (e.target === modal) {
+    closeObservationModal();
+  }
+});
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const treeIdFromUrl = urlParams.get('treeId');
+  
+  if (treeIdFromUrl) {
+    selectTree(treeIdFromUrl);
+  } else {
+    // No tree in URL, show empty state
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('treeDetailContent').style.display = 'none';
+    document.getElementById('treeDetailContent').innerHTML = '';
+    
+    // Clear active selection in tree list
+    document.querySelectorAll('.tree-item').forEach(item => {
+      item.classList.remove('active');
+    });
+  }
+});
+
+
+//  document.addEventListener('DOMContentLoaded', function() {
+//     const qrButton = document.getElementById('qrButton');
+    
+//     if (qrButton) {
+//         qrButton.addEventListener('click', function(e) {
+//             e.preventDefault();
+            
+//             // Check if QRCode library is loaded
+//             if (typeof QRCode === 'undefined') {
+//                 alert('QRCode library not loaded. Please check your internet connection.');
+//                 console.error('QRCode is not defined. Library not loaded.');
+//                 return;
+//             }
+            
+//             const url = 'https://www.youtube.com/watch?v=qNiUlml9MDk';
+//             const size = 300;
+            
+//             console.log('Generating QR code for:', url);
+            
+//             generateQr(url, size);
+//         });
+//     } else {
+//         console.error('qrButton not found');
+//     }
+// });
+
+// const generateQr = (url, size) => {
+//     // Clear previous QR code if exists
+//     const container = document.getElementById('qroutput');
+//     if (!container) {
+//         console.error('Element with id "qrcode" not found');
+//         return;
+//     }
+    
+//     container.innerHTML = ''; // Clear previous content
+    
+//     try {
+//         // Create QR code
+//         const qrcode = new QRCode(container, {
+//             text: url,
+//             width: size,
+//             height: size,
+//             colorDark: "#000000",
+//             colorLight: "#ffffff",
+//             correctLevel: QRCode.CorrectLevel.H
+//         });
+        
+//         console.log('QR code generated successfully');
+        
+//         // Add a download button
+//         setTimeout(() => {
+//             const qrImg = container.querySelector('img');
+//             if (qrImg) {
+//                 addDownloadButton(qrImg.src, 'tree-qr-code.png');
+//             }
+//         }, 100);
+        
+//     } catch (error) {
+//         console.error('Error generating QR code:', error);
+        
+//         // Fallback: Show the URL
+//         container.innerHTML = `
+//             <div style="padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
+//                 <h4>QR Code Data</h4>
+//                 <p style="word-break: break-all;">${url}</p>
+//                 <p><small>Error: Could not generate QR code. ${error.message}</small></p>
+//                 <button onclick="window.open('https://www.qr-code-generator.com/', '_blank')" 
+//                         style="padding: 5px 10px; margin-top: 10px;">
+//                     Generate QR Online
+//                 </button>
+//             </div>
+//         `;
+//     }
+// };
+
+
+
 </script>
+
+
 
 </body>
 </html>

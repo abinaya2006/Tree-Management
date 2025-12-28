@@ -441,7 +441,7 @@
       max-width: 500px;
       width: 90%;
       max-height: 80vh;
-      overflow-y: auto;
+      /* overflow-y: auto; */
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
     .modal-header {
@@ -729,7 +729,7 @@
     <form id="obsResponseForm" onsubmit="submitObsResponse(event)">
         <div class="form-group">
         <label>New Health Status:</label>
-        <select id="modalNewHealth" required>
+        <select id="modalNewHealthObs" required>
           <option value="">Select status</option>
           <option value="healthy">🟢 Healthy</option>
           <option value="fair">🟡 Fair</option>
@@ -814,21 +814,51 @@
 
 
   // Helpers
-  function formatDate(date) {
-    if (!date) return "-";
-    if (typeof date === "string") date = new Date(date);
+  // Replace the formatDate function with this:
+function formatDate(date) {
+  if (!date) return "-";
+  
+  // If it's a Firestore timestamp
+  if (date.toDate && typeof date.toDate === 'function') {
+    date = date.toDate();
+  }
+  
+  // If it's already a Date object
+  if (date instanceof Date && !isNaN(date)) {
     return date.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
   }
+  
+  // If it's a string, try to parse it
+  if (typeof date === "string") {
+    const parsedDate = new Date(date);
+    if (!isNaN(parsedDate)) {
+      return parsedDate.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+    }
+  }
+  
+  // If it's a number (timestamp)
+  if (typeof date === "number") {
+    const parsedDate = new Date(date);
+    if (!isNaN(parsedDate)) {
+      return parsedDate.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+    }
+  }
+  
+  return "-";
+}1
 
   function setTodayLabel() {
-    const now = new Date();
+  const now = new Date();
+  if (now instanceof Date && !isNaN(now)) {
     document.getElementById("todayLabel").textContent = now.toLocaleDateString(undefined, {
       weekday: "short",
       day: "2-digit",
       month: "short",
     });
+  } else {
+    document.getElementById("todayLabel").textContent = "Today";
   }
-
+}
   function healthEmoji(health) {
     const emojis = { healthy: "🟢", fair: "🟡", poor: "🔴", dying: "⚫" };
     return emojis[health] || "⚪";
@@ -931,32 +961,47 @@
 
   // Load observations
   async function loadObservations() {
-    if (!caretakerZoneId) {
-      allObservations = [];
-      renderObservations();
-      return;
-    }
+  if (!caretakerZoneId) {
+    allObservations = [];
+    renderObservations();
+    return;
+  }
 
-    try {
-      const snap = await db.collection("observations")
-        .where("treeZone", "==", caretakerZoneId)
-        .orderBy("submittedAt", "desc")
-        .get();
+  try {
+    const snap = await db.collection("observations")
+      .where("treeZone", "==", caretakerZoneId)
+      .orderBy("submittedAt", "desc")
+      .get();
+    
+    allObservations = [];
+    snap.forEach(doc => {
+      const data = doc.data();
       
-      allObservations = [];
-      snap.forEach(doc => {
-        const data = doc.data();
-        allObservations.push({ 
-          id: doc.id, 
-          ...data,
-          submittedAt: data.submittedAt ? (data.submittedAt.toDate ? data.submittedAt.toDate() : new Date(data.submittedAt)) : null
-        });
+      // Convert Firestore timestamp to Date object
+      let submittedAt = null;
+      if (data.submittedAt) {
+        if (data.submittedAt.toDate && typeof data.submittedAt.toDate === 'function') {
+          submittedAt = data.submittedAt.toDate();
+        } else if (data.submittedAt instanceof Date) {
+          submittedAt = data.submittedAt;
+        } else if (typeof data.submittedAt === 'string') {
+          submittedAt = new Date(data.submittedAt);
+        } else if (typeof data.submittedAt === 'number') {
+          submittedAt = new Date(data.submittedAt);
+        }
+      }
+      
+      allObservations.push({ 
+        id: doc.id, 
+        ...data,
+        submittedAt: submittedAt
       });
+    });
 
-      renderObservations();
-      updateStatsAndKPIs();
-    } catch (err) {
-      console.error(err);
+    renderObservations();
+    updateStatsAndKPIs();
+  } catch (err) {
+    console.error(err);
       // FIXED: Check if error is due to missing index
       if (err.code === 'failed-precondition') {
         console.warn("Firestore index needed for observations query");
@@ -1170,6 +1215,7 @@ function renderNotifications() {
         const title = notif.title || "Notification";
         const message = notif.message || "No message";
         const isUnread = !notif.read;
+        const dateStr = formatDate(notif.createdAt); // Use formatDate function
         
         return `
         <div class="observation-item ${isUnread ? 'high' : ''}">
@@ -1177,18 +1223,19 @@ function renderNotifications() {
                 <div class="observation-title">${title}</div>
                 ${isUnread ? '<span style="font-size:10px;color:#ff9800;">NEW</span>' : ''}
             </div>
-            <div class="observation-meta">${formatDate(notif.createdAt)}</div>
+            <div class="observation-meta">${dateStr}</div>
             <div class="observation-details">${message}</div>
             <div class="observation-buttons">
                 <button class="btn btn-secondary" onclick="markNotificationRead('${notif.id.replace(/'/g, "\\'")}')">
                     ${isUnread ? 'Mark read' : 'Read'}
                 </button>
-                <button class="btn btn-primary" onclick="viewNotificationDetails('${notif.id.replace(/'/g, "\\'")}')">
-                    View
-                </button>
+                
             </div>
         </div>
         `;
+        // <button class="btn btn-primary" onclick="viewNotificationDetails('${notif.id.replace(/'/g, "\\'")}')">
+        //             View
+        //         </button>
     }).join("");
 }
   // Update notification badge
@@ -1344,7 +1391,7 @@ function renderNotifications() {
     return;
   }
 
-  const newHealth = document.getElementById("modalNewHealth").value;
+  const newHealth = document.getElementById("modalNewHealthObs").value;
   const status = document.getElementById("respStatus").value;
   const notes = document.getElementById("respNotes").value;
 
@@ -1548,6 +1595,10 @@ function renderNotifications() {
       let html = '<div class="observations-list">';
       snap.forEach(doc => {
         const log = doc.data();
+        
+        // Format the date using our helper function
+        const dateStr = formatDate(log.timestamp);
+        
         html += `
           <div class="observation-item">
             <div class="observation-header">
@@ -1555,7 +1606,7 @@ function renderNotifications() {
               <span class="severity-badge ${log.newStatus === 'healthy' ? 'low' : log.newStatus === 'fair' ? 'medium' : 'high'}">${log.newStatus || 'unknown'}</span>
             </div>
             <div class="observation-meta">
-              Tree ID: ${log.treeId} • ${formatDate(log.timestamp)}
+              Tree ID: ${log.treeId} • ${dateStr}
             </div>
             <div class="observation-details">
               Changed from <strong>${log.oldStatus}</strong> to <strong>${log.newStatus}</strong>

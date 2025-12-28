@@ -326,8 +326,81 @@ async function addCare() {
     }
 }
 
+// Wait for DOM to be fully loaded
+// document.addEventListener('DOMContentLoaded', function() {
+//     const qrButton = document.getElementById('qrButton');
+    
+//     if (qrButton) {
+//         qrButton.addEventListener('click', function(e) {
+//             e.preventDefault();
+            
+//             // Check if QRCode library is loaded
+//             if (typeof QRCode === 'undefined') {
+//                 alert('QRCode library not loaded. Please check your internet connection.');
+//                 console.error('QRCode is not defined. Library not loaded.');
+//                 return;
+//             }
+            
+//             const url = 'https://www.youtube.com/watch?v=qNiUlml9MDk';
+//             const size = 300;
+            
+//             console.log('Generating QR code for:', url);
+            
+//             generateQr(url, size);
+//         });
+//     } else {
+//         console.error('qrButton not found');
+//     }
+// });
 
-
+// const generateQr = (url, size) => {
+//     // Clear previous QR code if exists
+//     const container = document.getElementById('qroutput');
+//     if (!container) {
+//         console.error('Element with id "qrcode" not found');
+//         return;
+//     }
+    
+//     container.innerHTML = ''; // Clear previous content
+    
+//     try {
+//         // Create QR code
+//         const qrcode = new QRCode(container, {
+//             text: url,
+//             width: size,
+//             height: size,
+//             colorDark: "#000000",
+//             colorLight: "#ffffff",
+//             correctLevel: QRCode.CorrectLevel.H
+//         });
+        
+//         console.log('QR code generated successfully');
+        
+//         // Add a download button
+//         setTimeout(() => {
+//             const qrImg = container.querySelector('img');
+//             if (qrImg) {
+//                 addDownloadButton(qrImg.src, 'tree-qr-code.png');
+//             }
+//         }, 100);
+        
+//     } catch (error) {
+//         console.error('Error generating QR code:', error);
+        
+//         // Fallback: Show the URL
+//         container.innerHTML = `
+//             <div style="padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
+//                 <h4>QR Code Data</h4>
+//                 <p style="word-break: break-all;">${url}</p>
+//                 <p><small>Error: Could not generate QR code. ${error.message}</small></p>
+//                 <button onclick="window.open('https://www.qr-code-generator.com/', '_blank')" 
+//                         style="padding: 5px 10px; margin-top: 10px;">
+//                     Generate QR Online
+//                 </button>
+//             </div>
+//         `;
+//     }
+// };
 
 
 // Modal buttons
