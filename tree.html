@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tree Details</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Top Navigation */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #2c5f2d;
+      color: white;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .navbar-left {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .navbar-right {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    /* Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 3fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Tree List Panel */
+    .tree-list-panel {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #2c5f2d;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: #2c5f2d;
+      box-shadow: 0 0 0 3px rgba(44, 95, 45, 0.1);
+    }
+
+    .tree-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .tree-item {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+
+    .tree-item:hover {
+      background: #f5f5f5;
+      border-color: #2c5f2d;
+    }
+
+    .tree-item.active {
+      background: #2c5f2d;
+      color: white;
+      border-color: #1e4620;
+    }
+
+    .tree-item-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .tree-item-meta {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    /* Tree Details Card */
+    .tree-details-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #2c5f2d 0%, #1e4620 100%);
+      color: white;
+      padding: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-content h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .header-content p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .qr-code-container {
+      width: 150px;
+      height: 150px;
+      background: white;
+      padding: 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-code-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Card Body */
+    .card-body {
+      padding: 25px;
+    }
+
+    /* Details Grid */
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    @media (max-width: 600px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .detail-item {
+      border-left: 3px solid #2c5f2d;
+      padding-left: 15px;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 5px;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #222;
+      word-break: break-word;
+    }
+
+    .detail-value.status-healthy {
+      color: #2e7d32;
+    }
+
+    .detail-value.status-fair {
+      color: #ef6c00;
+    }
+
+    .detail-value.status-poor {
+      color: #c62828;
+    }
+
+    .detail-value.status-dying {
+      color: #b71c1c;
+    }
+
+    /* Notes Section */
+    .notes-section {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .notes-label {
+      font-size: 12px;
+      color: #777;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .notes-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #555;
+      font-style: italic;
+    }
+
+    .notes-text.empty {
+      color: #999;
+    }
+
+    /* Buttons */
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #2c5f2d;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1e4620;
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Modal for Observation Form */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 600px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: #2c5f2d;
+      font-size: 18px;
+    }
+
+    .close-btn {
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    .modal-body {
+      padding: 25px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .required {
+      color: #e74c3c;
+      margin-left: 2px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="date"],
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2c5f2d;
+      box-shadow: 0 0 0 3px rgba(44, 95, 45, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .help-text {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #777;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .empty-state-text {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    /* Loading */
+    .loading {
+      display: inline-block;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Scrollbar */
+    .tree-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .tree-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .tree-list::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    .tree-list::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Navigation -->
+  <div class="navbar">
+    <div class="navbar-left">🌳 Tree Details Portal</div>
+    <div class="navbar-right">
+      <span>College: <strong id="collegeLabel">Loading...</strong></span>
+      <span id="userInfo">User</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-grid">
+    <!-- Left: Tree List -->
+    <div class="tree-list-panel">
+      <div class="panel-title">Select a Tree</div>
+      <input type="text" class="search-box" id="searchBox" placeholder="Search by name...">
+      <div class="tree-list" id="treeList">
+        <div style="text-align: center; color: #999; padding: 20px;">Loading trees...</div>
+      </div>
+    </div>
+
+    <!-- Right: Tree Details Card -->
+    <div class="tree-details-card">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-state-icon">🌲</div>
+        <div class="empty-state-text">Select a tree to view details</div>
+        <div style="font-size: 12px; color: #bbb;">Click on a tree from the list on the left</div>
+      </div>
+      <div id="treeDetailContent" style="display: none;">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Observation Form Modal -->
+<div id="observationModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📝 Submit Observation</h2>
+      <button class="close-btn" onclick="closeObservationModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <form id="observationForm">
+        <!-- Observer Name -->
+        <div class="form-group">
+          <label for="observerName">
+            <strong>Your Name</strong>
+            <span class="required">*</span>
+          </label>
+          <input type="text" id="observerName" required>
+          <small class="help-text">Your full name</small>
+        </div>
+
+        <!-- Observer Type -->
+        <div class="form-group">
+        <label for="observerType">
+            <strong>Observer Type</strong>
+            <span class="required">*</span>
+        </label>
+
+        <select id="observerType" required>
+            <option value="">-- Select observer type --</option>
+            <option value="student">Student</option>
+            <option value="caretaker">Caretaker</option>
+            <option value="faculty">Faculty</option>
+            <option value="visitor">Visitor</option>
+            <option value="other">Other</option>
+        </select>
+
+        <small class="help-text">
+            This helps us understand who reported the issue
+        </small>
+        </div>
+
+
+        <!-- Observation Type -->
+        <div class="form-group">
+          <label for="observationType">
+            <strong>Observation Type</strong>
+            <span class="required">*</span>
+          </label>
+          <select id="observationType" required>
+            <option value="">-- Choose Type --</option>
+            <option value="pest">Pest Infestation</option>
+            <option value="disease">Disease / Infection</option>
+            <option value="damage">Physical Damage</option>
+            <option value="hazard">Safety Hazard</option>
+            <option value="other">Other</option>
+          </select>
+          <small class="help-text">What type of observation is this?</small>
+        </div>
+
+        <!-- Observation Details -->
+        <div class="form-group">
+          <label for="observationDetails">
+            <strong>Details</strong>
+            <span class="required">*</span>
+          </label>
+          <textarea id="observationDetails" required placeholder="Describe what you observed in detail. Include location on tree, severity, etc."></textarea>
+          <small class="help-text">Be as specific as possible</small>
+        </div>
+
+        <!-- Severity Level -->
+        <div class="form-group">
+          <label for="severityLevel">
+            <strong>Severity Level</strong>
+            <span class="required">*</span>
+          </label>
+          <select id="severityLevel" required>
+            <option value="">-- Choose Severity --</option>
+            <option value="low">Low (Minor issue)</option>
+            <option value="medium">Medium (Requires attention)</option>
+            <option value="high">High (Urgent action needed)</option>
+            <option value="critical">Critical (Safety risk)</option>
+          </select>
+          <small class="help-text">How urgent is this observation?</small>
+        </div>
+
+        
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeObservationModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" id="submitObservationBtn" onclick="submitObservation()">Submit Observation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+  // Initialize Firebase
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
+    authDomain: "try-firebase-bdb77.firebaseapp.com",
+    projectId: "try-firebase-bdb77",
+    storageBucket: "try-firebase-bdb77.firebasestorage.app",
+    messagingSenderId: "327656427702",
+    appId: "1:327656427702:web:c2bf0fff68d18460029617",
+    measurementId: "G-KWBQWMT4GJ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Global state
+  let currentUser = null;
+  let userCollege = "college_123";
+  let allTrees = [];
+  let selectedTree = null;
+  let zoneMap={}
+
+  // Initialize
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      alert('Please log in first');
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser = user;
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    const userData = userDoc.data() || {};
+    userCollege = userData.collegeId || 'college_123';
+
+    document.getElementById('collegeLabel').textContent = userData.collegeName || 'Your College';
+    document.getElementById('userInfo').textContent = userData.displayName || user.email;
+
+    loadTrees();
+  });
+
+  // Load all trees for college
+  async function loadTrees() {
+    try {
+      const snapshot = await db.collection('trees')
+        .where('collegeId', '==', userCollege)
+        .orderBy('commonName', 'asc')
+        .get();
+
+      allTrees = [];
+      snapshot.forEach(doc => {
+        allTrees.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderTreeList(allTrees);
+    } catch (error) {
+      console.error('Error loading trees:', error);
+      document.getElementById('treeList').innerHTML = '<div style="color: #f00; padding: 20px;">Error loading trees</div>';
+    }
+  }
+
+  // Render tree list
+  function renderTreeList(trees) {
+    const container = document.getElementById('treeList');
+
+    if (!trees.length) {
+      container.innerHTML = '<div style="color: #999; padding: 20px; text-align: center;">No trees found</div>';
+      return;
+    }
+
+    container.innerHTML = trees.map(tree => `
+      <div class="tree-item ${selectedTree?.id === tree.id ? 'active' : ''}" onclick="selectTree('${tree.id}')">
+        <div class="tree-item-name">${tree.commonName || 'Unknown'}</div>
+        <div class="tree-item-meta">${tree.species || ''} • ${tree.zoneId || 'No zone'}</div>
+      </div>
+    `).join('');
+  }
+
+  // Search trees
+  document.getElementById('searchBox').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const filtered = allTrees.filter(tree =>
+      tree.commonName.toLowerCase().includes(query) ||
+      (tree.species && tree.species.toLowerCase().includes(query))
+    );
+    renderTreeList(filtered);
+  });
+
+  // Select tree and show details
+  async function selectTree(treeId) {
+    const tree = allTrees.find(t => t.id === treeId);
+    if (!tree) return;
+
+    selectedTree = tree;
+
+    // Fetch caretaker info
+    let caretakerName = 'Not assigned';
+    try {
+      const assignmentSnap = await db.collection('users')
+        .where('collegeId', '==', userCollege)
+        .where('zoneId', '==', tree.zoneId)
+        // .where('isActive', '==', true)
+        .limit(1)
+        .get();
+
+      if (!assignmentSnap.empty) {
+        assignmentSnap.forEach(doc => {
+            caretakerName = doc.data().name;
+            });
+
+      }
+    } catch (error) {
+      console.error('Error fetching caretaker:', error);
+    }
+
+    // Render details
+    const healthStatusClass = `status-${tree.healthStatus || 'fair'}`;
+    await loadZonesMap();
+    zoneName = zoneMap[tree.zoneId] || "Zone " + tree.zoneId.substring(0, 8);
+    const detailsHTML = `
+      <div class="card-header">
+        <div class="header-content">
+          <h1>${tree.commonName || 'Unknown Tree'}</h1>
+          <p>${tree.species || ''}</p>
+        </div>
+        ${tree.qrCodeDataUrl ? `
+          <div class="qr-code-container">
+            <img src="${tree.qrCodeDataUrl}" alt="QR Code">
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="card-body">
+        <div class="details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Common Name</div>
+            <div class="detail-value">${tree.commonName || '-'}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Species</div>
+            <div class="detail-value">${tree.species || '-'}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Genus</div>
+            <div class="detail-value">${tree.genus || '-'}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">DBH (cm)</div>
+            <div class="detail-value">${tree.dbh || '-'}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Height (m)</div>
+            <div class="detail-value">${tree.height || '-'}</div>
+          </div>
+
+        
+
+
+          <div class="detail-item">
+            <div class="detail-label">Zone</div>
+            <div class="detail-value">${zoneName}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Caretaker</div>
+            <div class="detail-value">${caretakerName}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Health Status</div>
+            <div class="detail-value ${healthStatusClass}">${tree.healthStatus || 'Unknown'}</div>
+          </div>
+        </div>
+
+        ${tree.notes ? `
+          <div class="notes-section">
+            <div class="notes-label">Notes</div>
+            <div class="notes-text">${tree.notes}</div>
+          </div>
+        ` : ''}
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="openObservationModal()">
+            📝 Submit Observation
+          </button>
+          <button class="btn btn-secondary" onclick="downloadQRCode()">
+            ⬇️ Download QR Code
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('treeDetailContent').innerHTML = detailsHTML;
+    document.getElementById('treeDetailContent').style.display = 'block';
+
+    // Update list highlight
+    document.querySelectorAll('.tree-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    event.target.closest('.tree-item')?.classList.add('active');
+  }
+
+  //zonename Load
+  async function loadZonesMap() {
+    if (!userCollege) {
+      console.error("userCollege is not set yet");
+      return;
+    }
+    
+    try {
+      console.log("Loading zones for college:", userCollege);
+      const snap = await db.collection("zones")
+        .where("collegeId", "==", userCollege)
+        .get();
+
+      console.log("Zones found:", snap.size);
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        console.log(`Zone ${doc.id}:`, data.name);
+        zoneMap[doc.id] = data.name || "Unnamed Zone";
+      });
+      
+      return zoneMap;
+    } catch (err) {
+      console.error("Error loading zones:", err);
+      return {};
+    }
+  }
+
+
+  // Open observation modal
+  function openObservationModal() {
+    if (!selectedTree) {
+      alert('Please select a tree first');
+      return;
+    }
+    document.getElementById('observationForm').reset();
+    document.getElementById('observationModal').style.display = 'block';
+  }
+
+  // Close observation modal
+  function closeObservationModal() {
+    document.getElementById('observationModal').style.display = 'none';
+  }
+
+  // Submit observation
+  async function submitObservation() {
+    const btn = document.getElementById('submitObservationBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+      const observation = {
+        collegeId: userCollege,
+        treeId: selectedTree.id,
+        treeName: selectedTree.commonName,
+        treeZone: selectedTree.zoneId,
+        observerName: document.getElementById('observerName').value,
+        observerType: document.getElementById('observerType').value,
+        observationType: document.getElementById('observationType').value,
+        details: document.getElementById('observationDetails').value,
+        severity: document.getElementById('severityLevel').value,
+        submittedAt: new Date().toISOString(),
+        // submittedBy: currentUser.uid,
+        status: 'pending',
+        assignedTo: null // Will be set by caretaker
+      };
+
+      // Save observation
+      const obsRef = await db.collection('observations').add(observation);
+
+      // Create notification for caretaker
+      const caretakerAssignment = await db.collection('users')
+        .where('collegeId', '==', userCollege)
+        .where('zoneId', '==', selectedTree.zoneId)
+        // .where('isActive', '==', true)
+        .limit(1)
+        .get();
+
+      if (!caretakerAssignment.empty) {
+        const caretakerDoc = caretakerAssignment.docs[0];
+
+        const caretakerId = caretakerDoc.id; // ✅ ALWAYS defined
+        const caretakerData = caretakerDoc.data();
+
+        console.log('Caretaker found:', caretakerId, caretakerData);
+
+        await db.collection('notifications').add({
+            collegeId: userCollege,
+            userId: caretakerId, 
+            type: 'observation',
+            title: `New observation for ${selectedTree.commonName}`,
+            message: `${observation.observerName} submitted a ${observation.severity} severity observation`,
+            treeId: selectedTree.id,
+            observationId: obsRef.id,
+            read: false,
+            createdAt: new Date().toISOString()
+        });
+        }
+
+        if (caretakerAssignment.empty) {
+            console.warn('No caretaker found for zone:', selectedTree.zoneId);
+            return;
+            }
+
+
+
+      alert(`✓ Observation submitted successfully!\nIt has been sent to the caretaker for review.`);
+      closeObservationModal();
+
+    } catch (error) {
+      console.error('Error submitting observation:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit Observation';
+    }
+  }
+
+  // Download QR code
+  function downloadQRCode() {
+    if (!selectedTree?.qrCodeDataUrl) {
+      alert('QR code not available for this tree');
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.href = selectedTree.qrCodeDataUrl;
+    link.download = `qr_${selectedTree.commonName}.png`;
+    link.click();
+  }
+
+  // Close modal on outside click
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('observationModal');
+    if (e.target === modal) {
+      closeObservationModal();
+    }
+  });
+</script>
+
+</body>
+</html>

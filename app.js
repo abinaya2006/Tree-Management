@@ -189,11 +189,15 @@ async function viewAllTrees() {
     snapshot.forEach(doc => {
         const tree = doc.data();
         const healthColor = tree.healthStatus === 'healthy' ? 'green' : tree.healthStatus === 'fair' ? 'orange' : 'red';
-        html += `<tr><td>${tree.commonName}</td><td>${tree.genus} ${tree.species}</td><td>${zoneList[tree.zoneId] }</td><td style="color:${healthColor};">${tree.healthStatus}</td><td>${tree.dbh}</td><td><button>Edit</button></td></tr>`;
+        html += `<tr><td>${tree.commonName}</td><td>${tree.genus} ${tree.species}</td><td>${zoneList[tree.zoneId] }</td><td style="color:${healthColor};">${tree.healthStatus}</td><td>${tree.dbh}</td><td><button onclick="viewTree()">View</button></td></tr>`;
     });
     
     html += '</tbody></table>';
     document.getElementById('treeListContainer').innerHTML = html;
+}
+
+function viewTree(){
+    window.location.href = "tree.html"
 }
 
 async function addZone() {
@@ -321,6 +325,8 @@ async function addCare() {
         }
     }
 }
+
+
 
 
 

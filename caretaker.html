@@ -69,11 +69,29 @@
       font-size: 14px;
       font-weight: 600;
     }
+    .notification-badge {
+      position: relative;
+    }
+    .badge-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ff5252;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
 
     /* Layout */
     .page {
       padding: 16px;
-      max-width: 1280px;
+      max-width: 1400px;
       margin: 0 auto;
     }
     .page-header {
@@ -119,6 +137,11 @@
       color: #333;
     }
     .btn-secondary:hover { background: #d0d0d0; }
+    .btn-warning {
+      background: #ff9800;
+      color: white;
+    }
+    .btn-warning:hover { background: #e68900; }
     .btn:active { transform: scale(0.98); }
     .btn:disabled {
       opacity: 0.6;
@@ -128,38 +151,51 @@
     /* Stats row */
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 16px;
     }
     @media (max-width: 900px) {
-      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stats-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     @media (max-width: 600px) {
-      .stats-row { grid-template-columns: minmax(0, 1fr); }
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     .stat-card {
       background: #fff;
-      padding: 10px 12px;
+      padding: 12px;
       border-radius: 6px;
       border: 1px solid #eee;
     }
     .stat-label {
       font-size: 11px;
       color: #777;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
     }
     .stat-value {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
       color: #2c5f2d;
     }
+    .stat-card.alert {
+      border-left: 4px solid #ff9800;
+      background: #fff8f0;
+    }
+    .stat-card.alert .stat-value {
+      color: #ff9800;
+    }
 
-    /* Main grid */
+    /* Main grid - 2 column */
     .grid {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: 2fr 1fr;
       gap: 16px;
+    }
+    @media (max-width: 1000px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* Cards */
@@ -182,12 +218,41 @@
     .card-subtitle {
       font-size: 12px;
       color: #777;
+      margin-top: 2px;
     }
 
-    /* Tree cards grid */
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      padding: 8px 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: #777;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #2c5f2d;
+      border-bottom-color: #2c5f2d;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Trees grid */
     .trees-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 12px;
       margin-top: 12px;
     }
@@ -196,34 +261,35 @@
       border: 1px solid #e0e0e0;
       border-radius: 6px;
       padding: 12px;
-      transition: box-shadow 0.2s;
+      transition: all 0.2s;
+      cursor: pointer;
     }
     .tree-card:hover {
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-color: #2c5f2d;
+    }
+    .tree-card.urgent {
+      background: #fff8f0;
+      border-color: #ff9800;
     }
     .tree-card-header {
       display: flex;
       justify-content: space-between;
-      align-items: start;
+      align-items: center;
       margin-bottom: 8px;
     }
-    .tree-card-id {
+    .tree-card-name {
       font-weight: 600;
       font-size: 13px;
       flex: 1;
     }
     .health-emoji {
       font-size: 20px;
+      margin-left: 6px;
     }
     .tree-card-meta {
       font-size: 12px;
       color: #666;
-      margin-bottom: 8px;
-    }
-    .tree-card-meta strong {
-      display: block;
-      color: #333;
-      margin-bottom: 2px;
     }
     .tree-card-buttons {
       display: flex;
@@ -236,67 +302,84 @@
       font-size: 11px;
     }
 
-    /* Health update modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal.active {
+    /* Observations list */
+    .observations-list {
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
     }
-    .modal-content {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-    .modal-header {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-    .form-group {
-      margin-bottom: 12px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      margin-bottom: 4px;
-      color: #333;
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
+    .observation-item {
+      padding: 12px;
+      border-left: 3px solid #2c5f2d;
+      background: #f9f9f9;
       border-radius: 4px;
-      font-size: 13px;
-      font-family: inherit;
+      transition: all 0.2s;
     }
-    .form-group textarea {
-      resize: vertical;
-      min-height: 60px;
+    .observation-item.critical {
+      border-left-color: #ff5252;
+      background: #fff5f5;
     }
-    .modal-footer {
+    .observation-item.high {
+      border-left-color: #ff9800;
+      background: #fff8f0;
+    }
+    .observation-header {
       display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      margin-top: 16px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .observation-title {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .severity-badge {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .severity-badge.critical {
+      background: #ff5252;
+      color: white;
+    }
+    .severity-badge.high {
+      background: #ff9800;
+      color: white;
+    }
+    .severity-badge.medium {
+      background: #2196f3;
+      color: white;
+    }
+    .severity-badge.low {
+      background: #4caf50;
+      color: white;
+    }
+    .observation-meta {
+      font-size: 11px;
+      color: #777;
+      margin-bottom: 6px;
+    }
+    .observation-details {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .observation-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .observation-buttons button {
+      flex: 1;
+      min-width: 80px;
+      padding: 4px 8px;
+      font-size: 11px;
     }
 
-    /* Filters row */
+    /* Filters */
     .filters-row {
       display: flex;
       flex-wrap: wrap;
@@ -304,7 +387,8 @@
       margin-bottom: 10px;
       font-size: 12px;
     }
-    .filters-row input {
+    .filters-row input,
+    .filters-row select {
       padding: 6px 8px;
       border-radius: 4px;
       border: 1px solid #ddd;
@@ -334,7 +418,86 @@
       color: #2c5f2d;
     }
 
-    /* Loading state */
+    /* Modals */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2c5f2d;
+      box-shadow: 0 0 0 3px rgba(44, 95, 45, 0.1);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* Loading */
     .loading {
       text-align: center;
       padding: 24px;
@@ -352,6 +515,14 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: #999;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -366,12 +537,16 @@
   </div>
   <div class="navbar-right">
     <div id="todayLabel">Today</div>
+    <div class="notification-badge" onclick="openNotificationsModal()">
+      🔔
+      <span class="badge-count" id="notificationCount" style="display:none;">0</span>
+    </div>
     <div class="status-pill">
       <span class="status-dot"></span>
       <span>Online</span>
     </div>
     <div class="avatar" id="caretakerAvatar">CT</div>
-    <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" id="btnLogout" onclick="logout()">Logout</button>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="logout()">Logout</button>
   </div>
 </nav>
 
@@ -379,15 +554,12 @@
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1>My Trees</h1>
-      <div class="page-header-subtext" id="pageSubtext">
-        View and manage tree health in your assigned zone.
-      </div>
+      <h1>My Zone Dashboard</h1>
+      <div class="page-header-subtext">View, manage trees, and respond to observations in your zone.</div>
     </div>
     <div class="quick-actions">
-      <button class="btn btn-secondary" id="btnScanQR">Scan Qr</button>
-
-      <button class="btn btn-secondary" id="btnViewHistory"> Update History</button>
+      <button class="btn btn-secondary" onclick="openQRModal()">📱 Scan QR</button>
+      <button class="btn btn-secondary" onclick="viewMyHistory()">📊 My History</button>
     </div>
   </div>
 
@@ -402,7 +574,7 @@
       <span class="zone-info-value" id="zoneTotalTrees">0</span>
     </div>
     <div class="zone-info-row">
-      <span class="zone-info-label">Trees needing care (poor/dying):</span>
+      <span class="zone-info-label">Trees needing care:</span>
       <span class="zone-info-value" id="zoneNeedsCare">0</span>
     </div>
   </div>
@@ -410,51 +582,123 @@
   <!-- Stats row -->
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">Healthy</div>
+      <div class="stat-label">🟢 Healthy</div>
       <div class="stat-value" id="statHealthy">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Fair</div>
+      <div class="stat-label">🟡 Fair</div>
       <div class="stat-value" id="statFair">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Poor</div>
+      <div class="stat-label">🔴 Poor</div>
       <div class="stat-value" id="statPoor">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Dying</div>
+      <div class="stat-label">⚫ Dying</div>
       <div class="stat-value" id="statDying">0</div>
+    </div>
+    <div class="stat-card alert">
+      <div class="stat-label">⚠️ Pending Obs.</div>
+      <div class="stat-value" id="statPendingObs">0</div>
     </div>
   </div>
 
-  <!-- Trees grid -->
+  <!-- Main grid -->
   <div class="grid">
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Trees in Zone</div>
-          <div class="card-subtitle" id="treesSubtitle">Loading trees…</div>
+    <!-- Left: Trees & Observations -->
+    <div>
+      <!-- Tabs -->
+      <div class="card">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('trees')">🌲 My Trees</button>
+          <button class="tab-btn" onclick="switchTab('observations')">📋 Observations</button>
+        </div>
+
+        <!-- Trees Tab -->
+        <div id="trees-tab" class="tab-content active">
+          <div class="filters-row">
+            <input type="text" id="filterSearch" placeholder="Search tree name..." onkeyup="renderTrees()">
+            <select id="filterHealth" onchange="renderTrees()">
+              <option value="">All health status</option>
+              <option value="healthy">🟢 Healthy</option>
+              <option value="fair">🟡 Fair</option>
+              <option value="poor">🔴 Poor</option>
+              <option value="dying">⚫ Dying</option>
+            </select>
+          </div>
+          <div class="trees-grid" id="treesGrid">
+            <div class="loading"><div class="spinner"></div> Loading trees...</div>
+          </div>
+          <div id="noTreesMessage" class="empty-state" style="display:none;">
+            No trees match your filters.
+          </div>
+        </div>
+
+        <!-- Observations Tab -->
+        <div id="observations-tab" class="tab-content">
+          <div class="filters-row">
+            <select id="filterObsSeverity" onchange="renderObservations()">
+              <option value="">All severity levels</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select id="filterObsStatus" onchange="renderObservations()">
+              <option value="">All status</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+          <div class="observations-list" id="observationsList">
+            <div class="loading"><div class="spinner"></div> Loading observations...</div>
+          </div>
+          <div id="noObsMessage" class="empty-state" style="display:none;">
+            No observations for your zone.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Notifications & Quick Actions -->
+    <div>
+      <!-- Notifications Card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔔 Recent Notifications</div>
+            <div class="card-subtitle">Last 5 notifications</div>
+          </div>
+        </div>
+        <div id="notificationsList" class="observations-list" style="margin-top:0;">
+          <div class="empty-state">No notifications yet</div>
         </div>
       </div>
 
-      <div class="filters-row">
-        <input type="text" id="filterSearch" placeholder="Search tree ID or name...">
-        <select id="filterHealth" style="min-width:100px;">
-          <option value="">All health status</option>
-          <option value="healthy">🟢 Healthy</option>
-          <option value="fair">🟡 Fair</option>
-          <option value="poor">🔴 Poor</option>
-          <option value="dying">⚫ Dying</option>
-        </select>
+      <!-- Quick Stats -->
+      <div class="card" style="margin-top: 16px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📈 Quick Stats</div>
+          </div>
+        </div>
+        <div style="font-size:13px;line-height:1.8;">
+          <div>
+            <strong>Updates this week:</strong>
+            <span id="updatesThisWeek" style="float:right;font-weight:600;color:#2c5f2d;">0</span>
+          </div>
+          <div style="margin-top:8px;">
+            <strong>Avg. response time:</strong>
+            <span id="avgResponseTime" style="float:right;font-weight:600;color:#2c5f2d;">-</span>
+          </div>
+          <div style="margin-top:8px;">
+            <strong>Last update:</strong>
+            <span id="lastUpdate" style="float:right;font-weight:600;color:#2c5f2d;">-</span>
+          </div>
+        </div>
       </div>
-
-      <div class="trees-grid" id="treesGrid">
-        <div class="loading"><div class="spinner"></div> Loading trees...</div>
-      </div>
-      <div id="noTreesMessage" style="font-size:13px;color:#777;margin-top:12px;text-align:center;display:none;">
-        No trees found in your zone.
-      </div>
-    </section>
+    </div>
   </div>
 </div>
 
@@ -462,13 +706,13 @@
 <div class="modal" id="healthModal">
   <div class="modal-content">
     <div class="modal-header">
-      Update Tree Health
-      <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeHealthModal()">×</button>
+      <div>Update Tree Health</div>
+      <button class="modal-close" onclick="closeHealthModal()">×</button>
     </div>
     <form id="healthForm" onsubmit="saveTreeHealth(event)">
       <div class="form-group">
-        <label>Tree ID:</label>
-        <input type="text" id="modalTreeId" readonly style="background:#f5f5f5;">
+        <label>Tree:</label>
+        <input type="text" id="modalTreeName" readonly style="background:#f5f5f5;">
       </div>
       <div class="form-group">
         <label>Current Health:</label>
@@ -477,7 +721,7 @@
       <div class="form-group">
         <label>New Health Status:</label>
         <select id="modalNewHealth" required>
-          <option value="">Select health status</option>
+          <option value="">Select status</option>
           <option value="healthy">🟢 Healthy</option>
           <option value="fair">🟡 Fair</option>
           <option value="poor">🔴 Poor</option>
@@ -486,7 +730,7 @@
       </div>
       <div class="form-group">
         <label>Notes (optional):</label>
-        <textarea id="modalNotes" placeholder="e.g., Dry leaves observed, branch damage, pest infestation..."></textarea>
+        <textarea id="modalNotes" placeholder="Describe observations, treatment applied, etc."></textarea>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeHealthModal()">Cancel</button>
@@ -496,16 +740,48 @@
   </div>
 </div>
 
+<!-- Observation Response Modal -->
+<div class="modal" id="obsResponseModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div>Respond to Observation</div>
+      <button class="modal-close" onclick="closeObsResponseModal()">×</button>
+    </div>
+    <div id="obsResponseContent">
+      <!-- Filled by JS -->
+    </div>
+    <form id="obsResponseForm" onsubmit="submitObsResponse(event)">
+      <div class="form-group">
+        <label>Status:</label>
+        <select id="respStatus" required>
+          <option value="">Select status</option>
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Your Response:</label>
+        <textarea id="respNotes" required placeholder="What actions have you taken? What's the outcome?"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeObsResponseModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit Response</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- QR Scanner Modal -->
 <div class="modal" id="qrModal">
   <div class="modal-content">
     <div class="modal-header">
-      Scan Tree QR Code
-      <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeQRModal()">×</button>
+      <div>Scan Tree QR Code</div>
+      <button class="modal-close" onclick="closeQRModal()">×</button>
     </div>
     <div class="form-group">
-      <label>Enter Tree ID or scan QR code:</label>
-      <input type="text" id="qrInput" placeholder="Tree ID or QR code..." autofocus>
+      <label>Scan QR code or enter Tree ID:</label>
+      <input type="text" id="qrInput" placeholder="Tree ID or scan..." autofocus>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="closeQRModal()">Cancel</button>
@@ -518,8 +794,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
 
 <script>
   // Firebase config
@@ -527,10 +801,9 @@
     apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
     authDomain: "try-firebase-bdb77.firebaseapp.com",
     projectId: "try-firebase-bdb77",
-    storageBucket: "try-firebase-bdb77.firebasestorage.app",
+    storageBucket: "try-firebase-bdb77.appspot.com",
     messagingSenderId: "327656427702",
-    appId: "1:327656427702:web:c2bf0fff68d18460029617",
-    measurementId: "G-KWBQWMT4GJ"
+    appId: "1:327656427702:web:c2bf0fff68d18460029617"
   };
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -538,22 +811,23 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-
   // State
   let currentUser = null;
   let userDoc = null;
   let caretakerZoneId = null;
   let userCollege = null;
   let allTrees = [];
+  let allObservations = [];
+  let allNotifications = [];
   let currentEditingTreeId = null;
+  let currentRespondingObsId = null;
   let zoneMap = {};
 
-
-  // -------- Helpers --------
+  // Helpers
   function formatDate(date) {
     if (!date) return "-";
     if (typeof date === "string") date = new Date(date);
-    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
   }
 
   function setTodayLabel() {
@@ -566,129 +840,26 @@
   }
 
   function healthEmoji(health) {
-    if (health === "healthy") return "🟢";
-    if (health === "fair") return "🟡";
-    if (health === "poor") return "🔴";
-    if (health === "dying") return "⚫";
-    return "⚪";
+    const emojis = { healthy: "🟢", fair: "🟡", poor: "🔴", dying: "⚫" };
+    return emojis[health] || "⚪";
   }
 
-   async function loadZonesMap() {
-    if (!userCollege) {
-      console.error("userCollege is not set yet");
-      return;
-    }
+  // Tab switching
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     
-    try {
-      console.log("Loading zones for college:", userCollege);
-      const snap = await db.collection("zones")
-        .where("collegeId", "==", userCollege)
-        .get();
+    document.getElementById(tabName + '-tab').classList.add('active');
+    event.target.classList.add('active');
 
-      console.log("Zones found:", snap.size);
-      
-      snap.forEach(doc => {
-        const data = doc.data();
-        console.log(`Zone ${doc.id}:`, data.name);
-        zoneMap[doc.id] = data.name || "Unnamed Zone";
-      });
-      
-      return zoneMap;
-    } catch (err) {
-      console.error("Error loading zones:", err);
-      return {};
+    if (tabName === 'observations') {
+      renderObservations();
+    } else {
+      renderTrees();
     }
   }
 
-
-  // -------- Tree health update modal --------
-  async function openTreeHealthModal(tree) {
-    currentEditingTreeId = tree.id;
-    document.getElementById("modalTreeId").value = tree.treeId || tree.id;
-    document.getElementById("modalCurrentHealth").value = tree.healthStatus || "unknown";
-    document.getElementById("modalNewHealth").value = "";
-    document.getElementById("modalNotes").value = tree.notes || "";
-    document.getElementById("healthModal").classList.add("active");
-  }
-
-  function closeHealthModal() {
-    document.getElementById("healthModal").classList.remove("active");
-    currentEditingTreeId = null;
-  }
-
-  async function saveTreeHealth(e) {
-    e.preventDefault();
-    if (!currentEditingTreeId) return;
-
-    const newHealth = document.getElementById("modalNewHealth").value;
-    const notes = document.getElementById("modalNotes").value;
-
-    if (!newHealth) {
-      alert("Please select a health status.");
-      return;
-    }
-
-    try {
-      await db.collection("trees").doc(currentEditingTreeId).update({
-        healthStatus: newHealth,
-        lastCheckedBy: currentUser.uid,
-        lastCheckedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        notes: notes,
-      });
-
-      // Log update to tree_logs
-      await db.collection("tree_logs").add({
-        treeId: currentEditingTreeId,
-        caretakerId: currentUser.uid,
-        oldStatus: document.getElementById("modalCurrentHealth").value,
-        newStatus: newHealth,
-        notes: notes,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-
-      alert("Tree health updated successfully!");
-      closeHealthModal();
-      await loadZoneTrees();
-      updateStatsAndKPIs();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update tree health: " + err.message);
-    }
-  }
-
-  // -------- QR Modal --------
-  function openQRModal() {
-    document.getElementById("qrModal").classList.add("active");
-    document.getElementById("qrInput").value = "";
-    setTimeout(() => document.getElementById("qrInput").focus(), 100);
-  }
-
-  function closeQRModal() {
-    document.getElementById("qrModal").classList.remove("active");
-  }
-
-  async function handleQRInput() {
-    const qrValue = document.getElementById("qrInput").value.trim();
-    if (!qrValue) {
-      alert("Please enter a Tree ID or scan a QR code.");
-      return;
-    }
-
-    // Find tree by treeId or doc id
-    let foundTree = allTrees.find(t => t.treeId === qrValue || t.id === qrValue);
-    if (!foundTree) {
-      alert("Tree not found: " + qrValue);
-      return;
-    }
-
-    closeQRModal();
-    await openTreeHealthModal(foundTree);
-  }
-
-  
-
-
-  // -------- Load zone trees --------
+  // Load zone trees
   async function loadZoneTrees() {
     if (!caretakerZoneId) {
       allTrees = [];
@@ -720,6 +891,7 @@
     }
   }
 
+  // Render trees
   function renderTrees() {
     const grid = document.getElementById("treesGrid");
     const searchVal = document.getElementById("filterSearch").value.toLowerCase();
@@ -727,71 +899,176 @@
 
     let filtered = allTrees.filter(t => {
       const matchesSearch = !searchVal || 
-        (t.treeId && t.treeId.toLowerCase().includes(searchVal)) ||
         (t.commonName && t.commonName.toLowerCase().includes(searchVal));
-      
       const matchesHealth = !healthFilter || t.healthStatus === healthFilter;
-      
       return matchesSearch && matchesHealth;
     });
 
     if (filtered.length === 0) {
       grid.innerHTML = "";
       document.getElementById("noTreesMessage").style.display = "block";
-      document.getElementById("treesSubtitle").textContent = "No trees match your filters.";
       return;
     }
 
     document.getElementById("noTreesMessage").style.display = "none";
-    document.getElementById("treesSubtitle").textContent = filtered.length + " tree(s) shown";
-
     grid.innerHTML = filtered.map(tree => `
-      <div class="tree-card">
+      <div class="tree-card ${tree.healthStatus === 'dying' || tree.healthStatus === 'poor' ? 'urgent' : ''}">
         <div class="tree-card-header">
-          <div class="tree-card-id">${tree.commonName || "Unknown"}</div>
-          <img src="qr-icon.svg" class="qr-icon" onclick="showTreeQR('${tree.qrUrl}')">
-
+          <div class="tree-card-name">${tree.commonName || "Unknown"}</div>
           <div class="health-emoji">${healthEmoji(tree.healthStatus)}</div>
         </div>
         <div class="tree-card-meta">
-          <strong>${tree.treeId || tree.id}</strong>
-          ${tree.scientificName ? `<span style="font-size:10px;color:#999;">${tree.scientificName}</span>` : ""}
-          <div style="margin-top:6px;">
-            Health: <strong>${tree.healthStatus || "unknown"}</strong>
-          </div>
-          <div style="margin-top:4px;">
-            Last checked: ${formatDate(tree.lastCheckedAt ? tree.lastCheckedAt.toDate ? tree.lastCheckedAt.toDate() : tree.lastCheckedAt : null)}
-          </div>
-          ${tree.notes ? `<div style="margin-top:4px;background:#f0f0f0;padding:4px;border-radius:3px;font-size:11px;color:#555;">${tree.notes}</div>` : ""}
+          <div>${tree.species || "Species unknown"}</div>
+          <div style="margin-top:4px;color:#999;">Last checked: ${formatDate(tree.lastCheckedAt)}</div>
         </div>
         <div class="tree-card-buttons">
-          <button class="btn btn-primary" onclick="handleTreeHealthClick('${tree.id}')">Update Health</button>
+          <button class="btn btn-primary" onclick="openHealthModal('${tree.id}')">Update</button>
+          <button class="btn btn-secondary" onclick="viewTreeDetails('${tree.id}')">View</button>
         </div>
       </div>
     `).join("");
   }
 
-  function handleTreeHealthClick(treeId) {
-    const tree = allTrees.find(t => t.id === treeId);
-    if (tree) {
-      openTreeHealthModal(tree);
+  // Load observations
+  async function loadObservations() {
+    if (!caretakerZoneId) {
+      allObservations = [];
+      renderObservations();
+      return;
+    }
+
+    try {
+      const snap = await db.collection("observations")
+        .where("treeZone", "==", caretakerZoneId)
+        .orderBy("submittedAt", "desc")
+        .get();
+      
+      allObservations = [];
+      snap.forEach(doc => {
+        allObservations.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderObservations();
+      updateStatsAndKPIs();
+    } catch (err) {
+      console.error(err);
     }
   }
 
-  
-  function updateStatsAndKPIs() {
-    const stats = {
-      healthy: 0,
-      fair: 0,
-      poor: 0,
-      dying: 0,
-    };
+  // Render observations
+  function renderObservations() {
+    const container = document.getElementById("observationsList");
+    const severityFilter = document.getElementById("filterObsSeverity").value;
+    const statusFilter = document.getElementById("filterObsStatus").value;
 
+    let filtered = allObservations.filter(obs => {
+      const matchesSeverity = !severityFilter || obs.severity === severityFilter;
+      const matchesStatus = !statusFilter || obs.status === statusFilter;
+      return matchesSeverity && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = "";
+      document.getElementById("noObsMessage").style.display = "block";
+      return;
+    }
+
+    document.getElementById("noObsMessage").style.display = "none";
+    container.innerHTML = filtered.map(obs => `
+      <div class="observation-item ${obs.severity === 'critical' || obs.severity === 'high' ? obs.severity : ''}">
+        <div class="observation-header">
+          <div class="observation-title">${obs.treeName}</div>
+          <span class="severity-badge ${obs.severity}">${obs.severity.toUpperCase()}</span>
+        </div>
+        <div class="observation-meta">
+          <strong>${obs.observationType}</strong> • ${formatDate(obs.submittedAt)} • By: ${obs.observerName}
+        </div>
+        <div class="observation-details">${obs.details}</div>
+        <div style="font-size:11px;color:#777;">Status: <strong>${obs.status || 'pending'}</strong></div>
+        <div class="observation-buttons">
+          <button class="btn btn-primary" onclick="openObsResponseModal('${obs.id}')">Respond</button>
+          <button class="btn btn-secondary" onclick="viewObsDetails('${obs.id}')">Details</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // Load notifications
+  async function loadNotifications() {
+    if (!currentUser) return;
+
+    try {
+      const snap = await db.collection("notifications")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("createdAt", "desc")
+        .limit(5)
+        .get();
+      
+      allNotifications = [];
+      snap.forEach(doc => {
+        allNotifications.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderNotifications();
+      updateNotificationBadge();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Render notifications
+  function renderNotifications() {
+    const container = document.getElementById("notificationsList");
+    
+    if (allNotifications.length === 0) {
+      container.innerHTML = '<div class="empty-state">No new notifications</div>';
+      return;
+    }
+
+    container.innerHTML = allNotifications.map(notif => `
+      <div class="observation-item ${notif.read ? '' : 'high'}">
+        <div class="observation-header">
+          <div class="observation-title">${notif.title}</div>
+        </div>
+        <div class="observation-meta">${formatDate(notif.createdAt)}</div>
+        <div class="observation-details">${notif.message}</div>
+        <div class="observation-buttons">
+          <button class="btn btn-secondary" style="flex:1;" onclick="markNotificationRead('${notif.id}')">Mark read</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // Update notification badge
+  function updateNotificationBadge() {
+    const unreadCount = allNotifications.filter(n => !n.read).length;
+    const badge = document.getElementById("notificationCount");
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  // Mark notification as read
+  async function markNotificationRead(notifId) {
+    try {
+      await db.collection("notifications").doc(notifId).update({
+        read: true
+      });
+      await loadNotifications();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Update stats
+  function updateStatsAndKPIs() {
+    const stats = { healthy: 0, fair: 0, poor: 0, dying: 0 };
     allTrees.forEach(t => {
       const status = t.healthStatus || "unknown";
-      if (stats.hasOwnProperty(status)) {
-        stats[status]++;
-      }
+      if (stats.hasOwnProperty(status)) stats[status]++;
     });
 
     document.getElementById("statHealthy").textContent = stats.healthy;
@@ -801,12 +1078,173 @@
 
     document.getElementById("zoneTotalTrees").textContent = allTrees.length;
     document.getElementById("zoneNeedsCare").textContent = stats.poor + stats.dying;
+
+    const pendingObs = allObservations.filter(o => o.status !== 'resolved').length;
+    document.getElementById("statPendingObs").textContent = pendingObs;
   }
 
-  // -------- Auth + initialization --------
+  // Health modal
+  async function openHealthModal(treeId) {
+    const tree = allTrees.find(t => t.id === treeId);
+    if (!tree) return;
+
+    currentEditingTreeId = treeId;
+    document.getElementById("modalTreeName").value = tree.commonName || "Unknown";
+    document.getElementById("modalCurrentHealth").value = tree.healthStatus || "unknown";
+    document.getElementById("modalNewHealth").value = "";
+    document.getElementById("modalNotes").value = tree.notes || "";
+    document.getElementById("healthModal").classList.add("active");
+  }
+
+  function closeHealthModal() {
+    document.getElementById("healthModal").classList.remove("active");
+    currentEditingTreeId = null;
+  }
+
+  async function saveTreeHealth(e) {
+    e.preventDefault();
+    if (!currentEditingTreeId) return;
+
+    const newHealth = document.getElementById("modalNewHealth").value;
+    const notes = document.getElementById("modalNotes").value;
+
+    if (!newHealth) {
+      alert("Please select a health status");
+      return;
+    }
+
+    try {
+      await db.collection("trees").doc(currentEditingTreeId).update({
+        healthStatus: newHealth,
+        lastCheckedBy: currentUser.uid,
+        lastCheckedAt: new Date().toISOString(),
+        notes: notes,
+      });
+
+      // Log update
+      await db.collection("tree_logs").add({
+        treeId: currentEditingTreeId,
+        caretakerId: currentUser.uid,
+        oldStatus: document.getElementById("modalCurrentHealth").value,
+        newStatus: newHealth,
+        notes: notes,
+        timestamp: new Date().toISOString(),
+      });
+
+      alert("✓ Tree health updated!");
+      closeHealthModal();
+      await loadZoneTrees();
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    }
+  }
+
+  // Observation response
+  async function openObsResponseModal(obsId) {
+    const obs = allObservations.find(o => o.id === obsId);
+    if (!obs) return;
+
+    currentRespondingObsId = obsId;
+    document.getElementById("obsResponseContent").innerHTML = `
+      <div style="font-size:13px;margin-bottom:12px;">
+        <strong>Tree:</strong> ${obs.treeName}<br>
+        <strong>Type:</strong> ${obs.observationType}<br>
+        <strong>Severity:</strong> ${obs.severity}<br>
+        <strong>Submitted by:</strong> ${obs.observerName}<br>
+        <strong>Details:</strong> ${obs.details}
+      </div>
+    `;
+    document.getElementById("obsResponseModal").classList.add("active");
+  }
+
+  function closeObsResponseModal() {
+    document.getElementById("obsResponseModal").classList.remove("active");
+    currentRespondingObsId = null;
+  }
+
+  async function submitObsResponse(e) {
+    e.preventDefault();
+    if (!currentRespondingObsId) return;
+
+    const status = document.getElementById("respStatus").value;
+    const notes = document.getElementById("respNotes").value;
+
+    try {
+      await db.collection("observations").doc(currentRespondingObsId).update({
+        status: status,
+        assignedTo: currentUser.uid,
+        response: notes,
+        respondedAt: new Date().toISOString(),
+      });
+
+      alert("✓ Response submitted!");
+      closeObsResponseModal();
+      await loadObservations();
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    }
+  }
+
+  // QR Modal
+  function openQRModal() {
+    document.getElementById("qrModal").classList.add("active");
+    document.getElementById("qrInput").value = "";
+    setTimeout(() => document.getElementById("qrInput").focus(), 100);
+  }
+
+  function closeQRModal() {
+    document.getElementById("qrModal").classList.remove("active");
+  }
+
+  async function handleQRInput() {
+    const qrValue = document.getElementById("qrInput").value.trim();
+    if (!qrValue) {
+      alert("Please enter a Tree ID");
+      return;
+    }
+
+    const tree = allTrees.find(t => t.id === qrValue || t.commonName === qrValue);
+    if (!tree) {
+      alert("Tree not found: " + qrValue);
+      return;
+    }
+
+    closeQRModal();
+    await openHealthModal(tree.id);
+  }
+
+  // View tree details
+  function viewTreeDetails(treeId) {
+    const tree = allTrees.find(t => t.id === treeId);
+    if (!tree) return;
+    
+    // Open tree.html with tree ID
+    window.open(`tree.html?treeId=${treeId}`, '_blank');
+  }
+
+  // View observation details
+  function viewObsDetails(obsId) {
+    alert("Observation details view - Full details modal coming soon");
+  }
+
+  // My history
+  function viewMyHistory() {
+    alert("My history - Shows your tree updates from tree_logs collection");
+  }
+
+  // Logout
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "index.html";
+    });
+  }
+
+  // Auth init
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
-      console.warn("Not logged in");
+      alert("Please log in");
       window.location.href = "index.html";
       return;
     }
@@ -815,76 +1253,61 @@
     setTodayLabel();
 
     try {
-      // Load caretaker profile
       const doc = await db.collection("users").doc(user.uid).get();
       userDoc = doc.data() || {};
       userCollege = userDoc.collegeId;
 
-
-      // Set avatar
       const initials = (userDoc.displayName || user.email || "CT")
         .split(" ")
-        .map((p) => p[0])
+        .map(p => p)
         .join("")
         .toUpperCase()
         .slice(0, 2);
       document.getElementById("caretakerAvatar").textContent = initials;
 
-      
-
-      // Auto-detect zone
-      caretakerZoneId = userDoc.zoneId || (Array.isArray(userDoc.zones) && userDoc.zones[0]) || null;
+      caretakerZoneId = userDoc.zoneId || (Array.isArray(userDoc.zones) && userDoc.zones);
 
       if (!caretakerZoneId) {
         document.getElementById("caretakerZoneLabel").textContent = "No zone assigned";
-        document.getElementById("treesGrid").innerHTML = '<div class="loading" style="color:orange;">No zone assigned to this caretaker.</div>';
         return;
       }
 
-      await loadZonesMap();
-      zoneName = zoneMap[caretakerZoneId] || "Zone " + caretakerZoneId.substring(0, 8);
+      // Get zone name
+      const zoneDoc = await db.collection("zones").doc(caretakerZoneId).get();
+      const zoneName = zoneDoc.data()?.name || caretakerZoneId;
 
-      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • Zone: ${zoneName }`;
+      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • ${zoneName}`;
       document.getElementById("zoneDisplayName").textContent = zoneName;
 
-      // Load trees
       await loadZoneTrees();
-      
+      await loadObservations();
+      await loadNotifications();
+
     } catch (err) {
       console.error(err);
-      alert("Error loading caretaker data: " + err.message);
+      alert("Error: " + err.message);
     }
   });
 
-  // -------- Event listeners --------
-  document.getElementById("btnScanQR").addEventListener("click", openQRModal);
-  document.getElementById("btnViewHistory").addEventListener("click", () => {
-    alert("History view: Shows your recent tree health updates (tree_logs collection).");
-  });
-  document.getElementById("btnLogout").addEventListener("click", () => {
-    auth.signOut().then(() => {
-      window.location.href = "index.html";
-    });
-  });
-
-  document.getElementById("filterSearch").addEventListener("input", renderTrees);
-  document.getElementById("filterHealth").addEventListener("change", renderTrees);
-
-  // Handle QR input enter key
-  document.getElementById("qrInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleQRInput();
-  });
-
-  // Expose functions globally for inline onclick
-  window.openTreeHealthModal = openTreeHealthModal;
+  // Global functions
+  window.switchTab = switchTab;
+  window.renderTrees = renderTrees;
+  window.renderObservations = renderObservations;
+  window.openHealthModal = openHealthModal;
   window.closeHealthModal = closeHealthModal;
   window.saveTreeHealth = saveTreeHealth;
+  window.openQRModal = openQRModal;
   window.closeQRModal = closeQRModal;
   window.handleQRInput = handleQRInput;
-  window.handleTreeHealthClick = handleTreeHealthClick;
+  window.viewTreeDetails = viewTreeDetails;
+  window.openObsResponseModal = openObsResponseModal;
+  window.closeObsResponseModal = closeObsResponseModal;
+  window.submitObsResponse = submitObsResponse;
+  window.openNotificationsModal = () => switchTab('notifications');
+  window.markNotificationRead = markNotificationRead;
+  window.viewMyHistory = viewMyHistory;
+  window.logout = logout;
 </script>
-
-<script src="app.js"></script>
 
 </body>
 </html>

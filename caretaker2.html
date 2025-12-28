@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Caretaker Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* Top nav */
+    .navbar {
+      height: 56px;
+      background: #2c5f2d;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+    .navbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .navbar-title {
+      font-weight: 600;
+      font-size: 18px;
+    }
+    .navbar-subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      background: #1b5e20;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4caf50;
+    }
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff;
+      color: #2c5f2d;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Layout */
+    .page {
+      padding: 16px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .page-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .page-header-subtext {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, transform 0.05s;
+    }
+    .btn-primary {
+      background: #2c5f2d;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #1e4620; }
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .btn-secondary:hover { background: #d0d0d0; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: minmax(0, 1fr); }
+    }
+    .stat-card {
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c5f2d;
+    }
+
+    /* Main grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: #777;
+    }
+
+    /* Tree cards grid */
+    .trees-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .tree-card {
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 12px;
+      transition: box-shadow 0.2s;
+    }
+    .tree-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .tree-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+    .tree-card-id {
+      font-weight: 600;
+      font-size: 13px;
+      flex: 1;
+    }
+    .health-emoji {
+      font-size: 20px;
+    }
+    .tree-card-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .tree-card-meta strong {
+      display: block;
+      color: #333;
+      margin-bottom: 2px;
+    }
+    .tree-card-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .tree-card-buttons button {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 11px;
+    }
+
+    /* Health update modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* Filters row */
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .filters-row input {
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 12px;
+      min-width: 120px;
+    }
+
+    /* Zone info */
+    .zone-info {
+      background: #f0f8f1;
+      border-left: 4px solid #2c5f2d;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    .zone-info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+    .zone-info-label {
+      color: #666;
+    }
+    .zone-info-value {
+      font-weight: 600;
+      color: #2c5f2d;
+    }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 24px;
+      color: #777;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e0e0e0;
+      border-top-color: #2c5f2d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top navbar -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <div>
+      <div class="navbar-title">🌳 Tree Inventory</div>
+      <div class="navbar-subtitle" id="caretakerZoneLabel">Loading…</div>
+    </div>
+  </div>
+  <div class="navbar-right">
+    <div id="todayLabel">Today</div>
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      <span>Online</span>
+    </div>
+    <div class="avatar" id="caretakerAvatar">CT</div>
+    <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" id="btnLogout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>My Trees</h1>
+      <div class="page-header-subtext" id="pageSubtext">
+        View and manage tree health in your assigned zone.
+      </div>
+    </div>
+    <div class="quick-actions">
+      <button class="btn btn-secondary" id="btnScanQR">Scan Qr</button>
+
+      <button class="btn btn-secondary" id="btnViewHistory"> Update History</button>
+    </div>
+  </div>
+
+  <!-- Zone info -->
+  <div class="zone-info">
+    <div class="zone-info-row">
+      <span class="zone-info-label">Zone:</span>
+      <span class="zone-info-value" id="zoneDisplayName">Loading…</span>
+    </div>
+    <div class="zone-info-row">
+      <span class="zone-info-label">Total trees assigned:</span>
+      <span class="zone-info-value" id="zoneTotalTrees">0</span>
+    </div>
+    <div class="zone-info-row">
+      <span class="zone-info-label">Trees needing care (poor/dying):</span>
+      <span class="zone-info-value" id="zoneNeedsCare">0</span>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Healthy</div>
+      <div class="stat-value" id="statHealthy">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Fair</div>
+      <div class="stat-value" id="statFair">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Poor</div>
+      <div class="stat-value" id="statPoor">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dying</div>
+      <div class="stat-value" id="statDying">0</div>
+    </div>
+  </div>
+
+  <!-- Trees grid -->
+  <div class="grid">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Trees in Zone</div>
+          <div class="card-subtitle" id="treesSubtitle">Loading trees…</div>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <input type="text" id="filterSearch" placeholder="Search tree ID or name...">
+        <select id="filterHealth" style="min-width:100px;">
+          <option value="">All health status</option>
+          <option value="healthy">🟢 Healthy</option>
+          <option value="fair">🟡 Fair</option>
+          <option value="poor">🔴 Poor</option>
+          <option value="dying">⚫ Dying</option>
+        </select>
+      </div>
+
+      <div class="trees-grid" id="treesGrid">
+        <div class="loading"><div class="spinner"></div> Loading trees...</div>
+      </div>
+      <div id="noTreesMessage" style="font-size:13px;color:#777;margin-top:12px;text-align:center;display:none;">
+        No trees found in your zone.
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Health Update Modal -->
+<div class="modal" id="healthModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      Update Tree Health
+      <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeHealthModal()">×</button>
+    </div>
+    <form id="healthForm" onsubmit="saveTreeHealth(event)">
+      <div class="form-group">
+        <label>Tree ID:</label>
+        <input type="text" id="modalTreeId" readonly style="background:#f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>Current Health:</label>
+        <input type="text" id="modalCurrentHealth" readonly style="background:#f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>New Health Status:</label>
+        <select id="modalNewHealth" required>
+          <option value="">Select health status</option>
+          <option value="healthy">🟢 Healthy</option>
+          <option value="fair">🟡 Fair</option>
+          <option value="poor">🔴 Poor</option>
+          <option value="dying">⚫ Dying</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional):</label>
+        <textarea id="modalNotes" placeholder="e.g., Dry leaves observed, branch damage, pest infestation..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeHealthModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div class="modal" id="qrModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      Scan Tree QR Code
+      <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeQRModal()">×</button>
+    </div>
+    <div class="form-group">
+      <label>Enter Tree ID or scan QR code:</label>
+      <input type="text" id="qrInput" placeholder="Tree ID or QR code..." autofocus>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeQRModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="handleQRInput()">Find Tree</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
+    authDomain: "try-firebase-bdb77.firebaseapp.com",
+    projectId: "try-firebase-bdb77",
+    storageBucket: "try-firebase-bdb77.firebasestorage.app",
+    messagingSenderId: "327656427702",
+    appId: "1:327656427702:web:c2bf0fff68d18460029617",
+    measurementId: "G-KWBQWMT4GJ"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+
+  // State
+  let currentUser = null;
+  let userDoc = null;
+  let caretakerZoneId = null;
+  let userCollege = null;
+  let allTrees = [];
+  let currentEditingTreeId = null;
+  let zoneMap = {};
+
+
+  // -------- Helpers --------
+  function formatDate(date) {
+    if (!date) return "-";
+    if (typeof date === "string") date = new Date(date);
+    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function setTodayLabel() {
+    const now = new Date();
+    document.getElementById("todayLabel").textContent = now.toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    });
+  }
+
+  function healthEmoji(health) {
+    if (health === "healthy") return "🟢";
+    if (health === "fair") return "🟡";
+    if (health === "poor") return "🔴";
+    if (health === "dying") return "⚫";
+    return "⚪";
+  }
+
+   async function loadZonesMap() {
+    if (!userCollege) {
+      console.error("userCollege is not set yet");
+      return;
+    }
+    
+    try {
+      console.log("Loading zones for college:", userCollege);
+      const snap = await db.collection("zones")
+        .where("collegeId", "==", userCollege)
+        .get();
+
+      console.log("Zones found:", snap.size);
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        console.log(`Zone ${doc.id}:`, data.name);
+        zoneMap[doc.id] = data.name || "Unnamed Zone";
+      });
+      
+      return zoneMap;
+    } catch (err) {
+      console.error("Error loading zones:", err);
+      return {};
+    }
+  }
+
+
+  // -------- Tree health update modal --------
+  async function openTreeHealthModal(tree) {
+    currentEditingTreeId = tree.id;
+    document.getElementById("modalTreeId").value = tree.treeId || tree.id;
+    document.getElementById("modalCurrentHealth").value = tree.healthStatus || "unknown";
+    document.getElementById("modalNewHealth").value = "";
+    document.getElementById("modalNotes").value = tree.notes || "";
+    document.getElementById("healthModal").classList.add("active");
+  }
+
+  function closeHealthModal() {
+    document.getElementById("healthModal").classList.remove("active");
+    currentEditingTreeId = null;
+  }
+
+  async function saveTreeHealth(e) {
+    e.preventDefault();
+    if (!currentEditingTreeId) return;
+
+    const newHealth = document.getElementById("modalNewHealth").value;
+    const notes = document.getElementById("modalNotes").value;
+
+    if (!newHealth) {
+      alert("Please select a health status.");
+      return;
+    }
+
+    try {
+      await db.collection("trees").doc(currentEditingTreeId).update({
+        healthStatus: newHealth,
+        lastCheckedBy: currentUser.uid,
+        lastCheckedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        notes: notes,
+      });
+
+      // Log update to tree_logs
+      await db.collection("tree_logs").add({
+        treeId: currentEditingTreeId,
+        caretakerId: currentUser.uid,
+        oldStatus: document.getElementById("modalCurrentHealth").value,
+        newStatus: newHealth,
+        notes: notes,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      alert("Tree health updated successfully!");
+      closeHealthModal();
+      await loadZoneTrees();
+      updateStatsAndKPIs();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update tree health: " + err.message);
+    }
+  }
+
+  // -------- QR Modal --------
+  function openQRModal() {
+    document.getElementById("qrModal").classList.add("active");
+    document.getElementById("qrInput").value = "";
+    setTimeout(() => document.getElementById("qrInput").focus(), 100);
+  }
+
+  function closeQRModal() {
+    document.getElementById("qrModal").classList.remove("active");
+  }
+
+  async function handleQRInput() {
+    const qrValue = document.getElementById("qrInput").value.trim();
+    if (!qrValue) {
+      alert("Please enter a Tree ID or scan a QR code.");
+      return;
+    }
+
+    // Find tree by treeId or doc id
+    let foundTree = allTrees.find(t => t.treeId === qrValue || t.id === qrValue);
+    if (!foundTree) {
+      alert("Tree not found: " + qrValue);
+      return;
+    }
+
+    closeQRModal();
+    await openTreeHealthModal(foundTree);
+  }
+
+  
+
+
+  // -------- Load zone trees --------
+  async function loadZoneTrees() {
+    if (!caretakerZoneId) {
+      allTrees = [];
+      renderTrees() //hmmm
+      return;
+    }
+
+    try {
+      const snap = await db
+        .collection("trees")
+        .where("zoneId", "==", caretakerZoneId)
+        .get();
+      
+      allTrees = [];
+     snap.forEach((doc) => {
+        const data = doc.data();
+        allTrees.push({ 
+          id: doc.id, 
+          ...data,
+          zoneId: data.zoneId || caretakerZoneId
+        });
+      });
+
+      renderTrees();
+      updateStatsAndKPIs();
+    } catch (err) {
+      console.error(err);
+      document.getElementById("treesGrid").innerHTML = `<div class="loading" style="color:red;">Error loading trees: ${err.message}</div>`;
+    }
+  }
+
+  function renderTrees() {
+    const grid = document.getElementById("treesGrid");
+    const searchVal = document.getElementById("filterSearch").value.toLowerCase();
+    const healthFilter = document.getElementById("filterHealth").value;
+
+    let filtered = allTrees.filter(t => {
+      const matchesSearch = !searchVal || 
+        (t.treeId && t.treeId.toLowerCase().includes(searchVal)) ||
+        (t.commonName && t.commonName.toLowerCase().includes(searchVal));
+      
+      const matchesHealth = !healthFilter || t.healthStatus === healthFilter;
+      
+      return matchesSearch && matchesHealth;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = "";
+      document.getElementById("noTreesMessage").style.display = "block";
+      document.getElementById("treesSubtitle").textContent = "No trees match your filters.";
+      return;
+    }
+
+    document.getElementById("noTreesMessage").style.display = "none";
+    document.getElementById("treesSubtitle").textContent = filtered.length + " tree(s) shown";
+
+    grid.innerHTML = filtered.map(tree => `
+      <div class="tree-card">
+        <div class="tree-card-header">
+          <div class="tree-card-id">${tree.commonName || "Unknown"}</div>
+          <img src="qr-icon.svg" class="qr-icon" onclick="showTreeQR('${tree.qrUrl}')">
+
+          <div class="health-emoji">${healthEmoji(tree.healthStatus)}</div>
+        </div>
+        <div class="tree-card-meta">
+          <strong>${tree.treeId || tree.id}</strong>
+          ${tree.scientificName ? `<span style="font-size:10px;color:#999;">${tree.scientificName}</span>` : ""}
+          <div style="margin-top:6px;">
+            Health: <strong>${tree.healthStatus || "unknown"}</strong>
+          </div>
+          <div style="margin-top:4px;">
+            Last checked: ${formatDate(tree.lastCheckedAt ? tree.lastCheckedAt.toDate ? tree.lastCheckedAt.toDate() : tree.lastCheckedAt : null)}
+          </div>
+          ${tree.notes ? `<div style="margin-top:4px;background:#f0f0f0;padding:4px;border-radius:3px;font-size:11px;color:#555;">${tree.notes}</div>` : ""}
+        </div>
+        <div class="tree-card-buttons">
+          <button class="btn btn-primary" onclick="handleTreeHealthClick('${tree.id}')">Update Health</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function handleTreeHealthClick(treeId) {
+    const tree = allTrees.find(t => t.id === treeId);
+    if (tree) {
+      openTreeHealthModal(tree);
+    }
+  }
+
+  
+  function updateStatsAndKPIs() {
+    const stats = {
+      healthy: 0,
+      fair: 0,
+      poor: 0,
+      dying: 0,
+    };
+
+    allTrees.forEach(t => {
+      const status = t.healthStatus || "unknown";
+      if (stats.hasOwnProperty(status)) {
+        stats[status]++;
+      }
+    });
+
+    document.getElementById("statHealthy").textContent = stats.healthy;
+    document.getElementById("statFair").textContent = stats.fair;
+    document.getElementById("statPoor").textContent = stats.poor;
+    document.getElementById("statDying").textContent = stats.dying;
+
+    document.getElementById("zoneTotalTrees").textContent = allTrees.length;
+    document.getElementById("zoneNeedsCare").textContent = stats.poor + stats.dying;
+  }
+
+  // -------- Auth + initialization --------
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      console.warn("Not logged in");
+      window.location.href = "index.html";
+      return;
+    }
+
+    currentUser = user;
+    setTodayLabel();
+
+    try {
+      // Load caretaker profile
+      const doc = await db.collection("users").doc(user.uid).get();
+      userDoc = doc.data() || {};
+      userCollege = userDoc.collegeId;
+
+
+      // Set avatar
+      const initials = (userDoc.displayName || user.email || "CT")
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+      document.getElementById("caretakerAvatar").textContent = initials;
+
+      
+
+      // Auto-detect zone
+      caretakerZoneId = userDoc.zoneId || (Array.isArray(userDoc.zones) && userDoc.zones[0]) || null;
+
+      if (!caretakerZoneId) {
+        document.getElementById("caretakerZoneLabel").textContent = "No zone assigned";
+        document.getElementById("treesGrid").innerHTML = '<div class="loading" style="color:orange;">No zone assigned to this caretaker.</div>';
+        return;
+      }
+
+      await loadZonesMap();
+      zoneName = zoneMap[caretakerZoneId] || "Zone " + caretakerZoneId.substring(0, 8);
+
+      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • Zone: ${zoneName }`;
+      document.getElementById("zoneDisplayName").textContent = zoneName;
+
+      // Load trees
+      await loadZoneTrees();
+      
+    } catch (err) {
+      console.error(err);
+      alert("Error loading caretaker data: " + err.message);
+    }
+  });
+
+  // -------- Event listeners --------
+  document.getElementById("btnScanQR").addEventListener("click", openQRModal);
+  document.getElementById("btnViewHistory").addEventListener("click", () => {
+    alert("History view: Shows your recent tree health updates (tree_logs collection).");
+  });
+  document.getElementById("btnLogout").addEventListener("click", () => {
+    auth.signOut().then(() => {
+      window.location.href = "index.html";
+    });
+  });
+
+  document.getElementById("filterSearch").addEventListener("input", renderTrees);
+  document.getElementById("filterHealth").addEventListener("change", renderTrees);
+
+  // Handle QR input enter key
+  document.getElementById("qrInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") handleQRInput();
+  });
+
+  // Expose functions globally for inline onclick
+  window.openTreeHealthModal = openTreeHealthModal;
+  window.closeHealthModal = closeHealthModal;
+  window.saveTreeHealth = saveTreeHealth;
+  window.closeQRModal = closeQRModal;
+  window.handleQRInput = handleQRInput;
+  window.handleTreeHealthClick = handleTreeHealthClick;
+</script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
