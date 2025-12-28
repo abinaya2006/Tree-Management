@@ -872,72 +872,80 @@
     btn.textContent = 'Submitting...';
 
     try {
-      const observation = {
-        collegeId: userCollege,
-        treeId: selectedTree.id,
-        treeName: selectedTree.commonName,
-        treeZone: selectedTree.zoneId,
-        observerName: document.getElementById('observerName').value,
-        observerType: document.getElementById('observerType').value,
-        observationType: document.getElementById('observationType').value,
-        details: document.getElementById('observationDetails').value,
-        severity: document.getElementById('severityLevel').value,
-        submittedAt: new Date().toISOString(),
-        // submittedBy: currentUser.uid,
-        status: 'pending',
-        assignedTo: null // Will be set by caretaker
-      };
-
-      // Save observation
-      const obsRef = await db.collection('observations').add(observation);
-
-      // Create notification for caretaker
-      const caretakerAssignment = await db.collection('users')
-        .where('collegeId', '==', userCollege)
-        .where('zoneId', '==', selectedTree.zoneId)
-        // .where('isActive', '==', true)
-        .limit(1)
-        .get();
-
-      if (!caretakerAssignment.empty) {
-        const caretakerDoc = caretakerAssignment.docs[0];
-
-        const caretakerId = caretakerDoc.id; // ✅ ALWAYS defined
-        const caretakerData = caretakerDoc.data();
-
-        console.log('Caretaker found:', caretakerId, caretakerData);
-
-        await db.collection('notifications').add({
+        // Get form values
+        const observation = {
             collegeId: userCollege,
-            userId: caretakerId, 
-            type: 'observation',
-            title: `New observation for ${selectedTree.commonName}`,
-            message: `${observation.observerName} submitted a ${observation.severity} severity observation`,
             treeId: selectedTree.id,
-            observationId: obsRef.id,
-            read: false,
-            createdAt: new Date().toISOString()
-        });
+            treeName: selectedTree.commonName,
+            treeZone: selectedTree.zoneId,
+            observerName: document.getElementById('observerName').value,
+            observerType: document.getElementById('observerType').value,
+            observationType: document.getElementById('observationType').value,
+            details: document.getElementById('observationDetails').value,
+            severity: document.getElementById('severityLevel').value,
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'pending',
+            assignedTo: null,
+            assignedToName: null
+        };
+
+        // Find caretaker for this zone
+        const caretakerQuery = await db.collection('users')
+            .where('collegeId', '==', userCollege)
+            .where('zoneId', '==', selectedTree.zoneId)
+            .where('role', '==', 'caretaker')
+            .limit(1)
+            .get();
+
+        let caretakerInfo = null;
+        
+        if (!caretakerQuery.empty) {
+            const caretakerDoc = caretakerQuery.docs[0];
+            const caretakerData = caretakerDoc.data();
+            
+            caretakerInfo = {
+                id: caretakerDoc.id,
+                name: caretakerData.displayName || caretakerData.name || 'Caretaker'
+            };
+            
+            observation.assignedTo = caretakerInfo.id;
+            observation.assignedToName = caretakerInfo.name;
         }
 
-        if (caretakerAssignment.empty) {
-            console.warn('No caretaker found for zone:', selectedTree.zoneId);
-            return;
-            }
+        // Save observation
+        const obsRef = await db.collection('observations').add(observation);
 
+        // Create notification for caretaker if found
+        if (caretakerInfo) {
+            await db.collection('notifications').add({
+                userId: caretakerInfo.id,
+                type: 'observation',
+                title: `New observation for ${observation.treeName}`,
+                message: `A ${observation.severity} severity observation was submitted by ${observation.observerName}`,
+                treeId: observation.treeId,
+                observationId: obsRef.id,
+                read: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                zoneId: observation.treeZone
+            });
+        }
 
-
-      alert(`✓ Observation submitted successfully!\nIt has been sent to the caretaker for review.`);
-      closeObservationModal();
+        // Success message
+        const successMsg = caretakerInfo 
+            ? `✓ Observation submitted!\nAssigned to: ${caretakerInfo.name}`
+            : `✓ Observation submitted!\n⚠️ No caretaker assigned - will be handled by admin`;
+        
+        alert(successMsg);
+        closeObservationModal();
 
     } catch (error) {
-      console.error('Error submitting observation:', error);
-      alert('Error: ' + error.message);
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Submit Observation';
+        btn.disabled = false;
+        btn.textContent = 'Submit Observation';
     }
-  }
+}
 
   // Download QR code
   function downloadQRCode() {

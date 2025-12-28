@@ -676,31 +676,7 @@
         </div>
       </div>
 
-      <!-- Quick Stats -->
-      <div class="card" style="margin-top: 16px;">
-        <div class="card-header">
-          <div>
-            <div class="card-title">📈 Quick Stats</div>
-          </div>
-        </div>
-        <div style="font-size:13px;line-height:1.8;">
-          <div>
-            <strong>Updates this week:</strong>
-            <span id="updatesThisWeek" style="float:right;font-weight:600;color:#2c5f2d;">0</span>
-          </div>
-          <div style="margin-top:8px;">
-            <strong>Avg. response time:</strong>
-            <span id="avgResponseTime" style="float:right;font-weight:600;color:#2c5f2d;">-</span>
-          </div>
-          <div style="margin-top:8px;">
-            <strong>Last update:</strong>
-            <span id="lastUpdate" style="float:right;font-weight:600;color:#2c5f2d;">-</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+     
 
 <!-- Health Update Modal -->
 <div class="modal" id="healthModal">
@@ -751,6 +727,17 @@
       <!-- Filled by JS -->
     </div>
     <form id="obsResponseForm" onsubmit="submitObsResponse(event)">
+        <div class="form-group">
+        <label>New Health Status:</label>
+        <select id="modalNewHealth" required>
+          <option value="">Select status</option>
+          <option value="healthy">🟢 Healthy</option>
+          <option value="fair">🟡 Fair</option>
+          <option value="poor">🔴 Poor</option>
+          <option value="dying">⚫ Dying</option>
+        </select>
+      </div>
+
       <div class="form-group">
         <label>Status:</label>
         <select id="respStatus" required>
@@ -805,9 +792,11 @@
     messagingSenderId: "327656427702",
     appId: "1:327656427702:web:c2bf0fff68d18460029617"
   };
+  
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
+  
   const auth = firebase.auth();
   const db = firebase.firestore();
 
@@ -822,6 +811,7 @@
   let currentEditingTreeId = null;
   let currentRespondingObsId = null;
   let zoneMap = {};
+
 
   // Helpers
   function formatDate(date) {
@@ -844,8 +834,9 @@
     return emojis[health] || "⚪";
   }
 
-  // Tab switching
-  function switchTab(tabName) {
+  // Tab switching - FIXED: Added event parameter
+  function switchTab(tabName, event) {
+    event.preventDefault();
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     
@@ -863,7 +854,7 @@
   async function loadZoneTrees() {
     if (!caretakerZoneId) {
       allTrees = [];
-      renderTrees() //hmmm
+      renderTrees();
       return;
     }
 
@@ -874,7 +865,7 @@
         .get();
       
       allTrees = [];
-     snap.forEach((doc) => {
+      snap.forEach((doc) => {
         const data = doc.data();
         allTrees.push({ 
           id: doc.id, 
@@ -911,22 +902,31 @@
     }
 
     document.getElementById("noTreesMessage").style.display = "none";
-    grid.innerHTML = filtered.map(tree => `
-      <div class="tree-card ${tree.healthStatus === 'dying' || tree.healthStatus === 'poor' ? 'urgent' : ''}">
+    grid.innerHTML = filtered.map(tree => {
+      // FIXED: Properly escape special characters in template literals
+      const treeName = tree.commonName || "Unknown";
+      const species = tree.species || "Species unknown";
+      const healthStatus = tree.healthStatus || "unknown";
+      const lastCheckedAt = tree.lastCheckedAt ? 
+        (tree.lastCheckedAt.toDate ? tree.lastCheckedAt.toDate() : new Date(tree.lastCheckedAt)) : 
+        null;
+      
+      return `
+      <div class="tree-card ${healthStatus === 'dying' || healthStatus === 'poor' ? 'urgent' : ''}">
         <div class="tree-card-header">
-          <div class="tree-card-name">${tree.commonName || "Unknown"}</div>
-          <div class="health-emoji">${healthEmoji(tree.healthStatus)}</div>
+          <div class="tree-card-name">${treeName}</div>
+          <div class="health-emoji">${healthEmoji(healthStatus)}</div>
         </div>
         <div class="tree-card-meta">
-          <div>${tree.species || "Species unknown"}</div>
-          <div style="margin-top:4px;color:#999;">Last checked: ${formatDate(tree.lastCheckedAt)}</div>
+          <div>${species}</div>
+          <div style="margin-top:4px;color:#999;">Last checked: ${formatDate(lastCheckedAt)}</div>
         </div>
         <div class="tree-card-buttons">
-          <button class="btn btn-primary" onclick="openHealthModal('${tree.id}')">Update</button>
-          <button class="btn btn-secondary" onclick="viewTreeDetails('${tree.id}')">View</button>
+          <button class="btn btn-primary" onclick="openHealthModal('${tree.id.replace(/'/g, "\\'")}')">Update</button>
+          <button class="btn btn-secondary" onclick="viewTreeDetails('${tree.id.replace(/'/g, "\\'")}')">View</button>
         </div>
       </div>
-    `).join("");
+    `}).join("");
   }
 
   // Load observations
@@ -945,13 +945,50 @@
       
       allObservations = [];
       snap.forEach(doc => {
-        allObservations.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        allObservations.push({ 
+          id: doc.id, 
+          ...data,
+          submittedAt: data.submittedAt ? (data.submittedAt.toDate ? data.submittedAt.toDate() : new Date(data.submittedAt)) : null
+        });
       });
 
       renderObservations();
       updateStatsAndKPIs();
     } catch (err) {
       console.error(err);
+      // FIXED: Check if error is due to missing index
+      if (err.code === 'failed-precondition') {
+        console.warn("Firestore index needed for observations query");
+        // Try without ordering if index is missing
+        try {
+          const snap = await db.collection("observations")
+            .where("treeZone", "==", caretakerZoneId)
+            .get();
+          
+          allObservations = [];
+          snap.forEach(doc => {
+            const data = doc.data();
+            allObservations.push({ 
+              id: doc.id, 
+              ...data,
+              submittedAt: data.submittedAt ? (data.submittedAt.toDate ? data.submittedAt.toDate() : new Date(data.submittedAt)) : null
+            });
+          });
+          
+          // Sort manually
+          allObservations.sort((a, b) => {
+            const dateA = a.submittedAt || new Date(0);
+            const dateB = b.submittedAt || new Date(0);
+            return dateB - dateA;
+          });
+          
+          renderObservations();
+          updateStatsAndKPIs();
+        } catch (innerErr) {
+          console.error("Error loading observations:", innerErr);
+        }
+      }
     }
   }
 
@@ -974,23 +1011,29 @@
     }
 
     document.getElementById("noObsMessage").style.display = "none";
-    container.innerHTML = filtered.map(obs => `
+    container.innerHTML = filtered.map(obs => {
+      // FIXED: Properly escape special characters
+      const treeName = obs.treeName || "Unknown Tree";
+      const observerName = obs.observerName || "Unknown";
+      const details = obs.details || "No details provided";
+      
+      return `
       <div class="observation-item ${obs.severity === 'critical' || obs.severity === 'high' ? obs.severity : ''}">
         <div class="observation-header">
-          <div class="observation-title">${obs.treeName}</div>
-          <span class="severity-badge ${obs.severity}">${obs.severity.toUpperCase()}</span>
+          <div class="observation-title">${treeName}</div>
+          <span class="severity-badge ${obs.severity || 'low'}">${(obs.severity || 'low').toUpperCase()}</span>
         </div>
         <div class="observation-meta">
-          <strong>${obs.observationType}</strong> • ${formatDate(obs.submittedAt)} • By: ${obs.observerName}
+          <strong>${obs.observationType || 'Observation'}</strong> • ${formatDate(obs.submittedAt)} • By: ${observerName}
         </div>
-        <div class="observation-details">${obs.details}</div>
+        <div class="observation-details">${details}</div>
         <div style="font-size:11px;color:#777;">Status: <strong>${obs.status || 'pending'}</strong></div>
         <div class="observation-buttons">
-          <button class="btn btn-primary" onclick="openObsResponseModal('${obs.id}')">Respond</button>
-          <button class="btn btn-secondary" onclick="viewObsDetails('${obs.id}')">Details</button>
+          <button class="btn btn-primary" onclick="openObsResponseModal('${obs.id.replace(/'/g, "\\'")}')">Respond</button>
+          <button class="btn btn-secondary" onclick="viewObsDetails('${obs.id.replace(/'/g, "\\'")}')">Details</button>
         </div>
       </div>
-    `).join("");
+    `}).join("");
   }
 
   // Load notifications
@@ -998,47 +1041,156 @@
     if (!currentUser) return;
 
     try {
-      const snap = await db.collection("notifications")
-        .where("userId", "==", currentUser.uid)
-        .orderBy("createdAt", "desc")
-        .limit(5)
-        .get();
-      
-      allNotifications = [];
-      snap.forEach(doc => {
-        allNotifications.push({ id: doc.id, ...doc.data() });
-      });
+        // OPTION 1: Get notifications where userId matches current user
+        const snap = await db.collection("notifications")
+            .where("userId", "==", currentUser.uid)
+            .orderBy("createdAt", "desc")
+            .limit(5)
+            .get();
+        
+        allNotifications = [];
+        snap.forEach(doc => {
+            const data = doc.data();
+            allNotifications.push({ 
+                id: doc.id, 
+                ...data,
+                createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date()
+            });
+        });
 
-      renderNotifications();
-      updateNotificationBadge();
+        renderNotifications();
+        updateNotificationBadge();
     } catch (err) {
-      console.error(err);
+        console.error("Error loading notifications:", err);
+        
+        // Fallback without ordering
+        try {
+            const snap = await db.collection("notifications")
+                .where("userId", "==", currentUser.uid)
+                .limit(5)
+                .get();
+            
+            allNotifications = [];
+            snap.forEach(doc => {
+                const data = doc.data();
+                allNotifications.push({ 
+                    id: doc.id, 
+                    ...data,
+                    createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date()
+                });
+            });
+            
+            // Sort manually
+            allNotifications.sort((a, b) => b.createdAt - a.createdAt);
+            
+            renderNotifications();
+            updateNotificationBadge();
+        } catch (innerErr) {
+            console.error("Fallback also failed:", innerErr);
+            allNotifications = [];
+            renderNotifications();
+            updateNotificationBadge();
+        }
     }
-  }
+}
 
   // Render notifications
-  function renderNotifications() {
-    const container = document.getElementById("notificationsList");
-    
-    if (allNotifications.length === 0) {
-      container.innerHTML = '<div class="empty-state">No new notifications</div>';
-      return;
+  async function loadNotifications() {
+    if (!currentUser) {
+        console.error("No current user");
+        return;
     }
 
-    container.innerHTML = allNotifications.map(notif => `
-      <div class="observation-item ${notif.read ? '' : 'high'}">
-        <div class="observation-header">
-          <div class="observation-title">${notif.title}</div>
-        </div>
-        <div class="observation-meta">${formatDate(notif.createdAt)}</div>
-        <div class="observation-details">${notif.message}</div>
-        <div class="observation-buttons">
-          <button class="btn btn-secondary" style="flex:1;" onclick="markNotificationRead('${notif.id}')">Mark read</button>
-        </div>
-      </div>
-    `).join("");
-  }
+    const currentUserId = currentUser.uid;
+    console.log("Loading notifications for:", currentUserId);
 
+    try {
+        // Get all notifications (we'll filter client-side)
+        const snap = await db.collection("notifications")
+            .orderBy("createdAt", "desc")
+            .limit(50)
+            .get();
+        
+        console.log("Total notifications found:", snap.size);
+        
+        allNotifications = [];
+        snap.forEach(doc => {
+            const data = doc.data();
+            console.log("Checking notification:", doc.id, "data:", data);
+            
+            // Check if this notification belongs to current user using various field names
+            const isForCurrentUser = 
+                data.userId === currentUserId ||
+                data.caretakerId === currentUserId ||
+                data.assignedTo === currentUserId ||
+                data.toUserId === currentUserId;
+            
+            // Also check if it's a zone notification for this caretaker's zone
+            const isZoneNotification = data.zoneId === caretakerZoneId;
+            
+            if (isForCurrentUser || isZoneNotification) {
+                allNotifications.push({ 
+                    id: doc.id, 
+                    ...data,
+                    createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date()
+                });
+            }
+        });
+        
+        console.log("Filtered notifications for user:", allNotifications.length);
+        renderNotifications();
+        updateNotificationBadge();
+        
+    } catch (err) {
+        console.error("Error loading notifications:", err);
+        allNotifications = [];
+        renderNotifications();
+        updateNotificationBadge();
+    }
+}
+
+function renderNotifications() {
+    const container = document.getElementById("notificationsList");
+    
+    console.log("Rendering", allNotifications.length, "notifications");
+    
+    if (allNotifications.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div>🔔 No new notifications</div>
+                <div style="font-size:11px;color:#999;margin-top:5px;">
+                    User ID: ${currentUser?.uid?.substring(0, 10) || 'none'}
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = allNotifications.map(notif => {
+        const title = notif.title || "Notification";
+        const message = notif.message || "No message";
+        const isUnread = !notif.read;
+        
+        return `
+        <div class="observation-item ${isUnread ? 'high' : ''}">
+            <div class="observation-header">
+                <div class="observation-title">${title}</div>
+                ${isUnread ? '<span style="font-size:10px;color:#ff9800;">NEW</span>' : ''}
+            </div>
+            <div class="observation-meta">${formatDate(notif.createdAt)}</div>
+            <div class="observation-details">${message}</div>
+            <div class="observation-buttons">
+                <button class="btn btn-secondary" onclick="markNotificationRead('${notif.id.replace(/'/g, "\\'")}')">
+                    ${isUnread ? 'Mark read' : 'Read'}
+                </button>
+                <button class="btn btn-primary" onclick="viewNotificationDetails('${notif.id.replace(/'/g, "\\'")}')">
+                    View
+                </button>
+            </div>
+        </div>
+        `;
+    }).join("");
+}
   // Update notification badge
   function updateNotificationBadge() {
     const unreadCount = allNotifications.filter(n => !n.read).length;
@@ -1079,7 +1231,7 @@
     document.getElementById("zoneTotalTrees").textContent = allTrees.length;
     document.getElementById("zoneNeedsCare").textContent = stats.poor + stats.dying;
 
-    const pendingObs = allObservations.filter(o => o.status !== 'resolved').length;
+    const pendingObs = allObservations.filter(o => !o.status || o.status !== 'resolved').length;
     document.getElementById("statPendingObs").textContent = pendingObs;
   }
 
@@ -1117,7 +1269,7 @@
       await db.collection("trees").doc(currentEditingTreeId).update({
         healthStatus: newHealth,
         lastCheckedBy: currentUser.uid,
-        lastCheckedAt: new Date().toISOString(),
+        lastCheckedAt: firebase.firestore.FieldValue.serverTimestamp(),
         notes: notes,
       });
 
@@ -1128,7 +1280,7 @@
         oldStatus: document.getElementById("modalCurrentHealth").value,
         newStatus: newHealth,
         notes: notes,
-        timestamp: new Date().toISOString(),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       });
 
       alert("✓ Tree health updated!");
@@ -1142,21 +1294,32 @@
 
   // Observation response
   async function openObsResponseModal(obsId) {
-    const obs = allObservations.find(o => o.id === obsId);
-    if (!obs) return;
+  const obs = allObservations.find(o => o.id === obsId);
+  if (!obs) return;
 
-    currentRespondingObsId = obsId;
-    document.getElementById("obsResponseContent").innerHTML = `
-      <div style="font-size:13px;margin-bottom:12px;">
-        <strong>Tree:</strong> ${obs.treeName}<br>
-        <strong>Type:</strong> ${obs.observationType}<br>
-        <strong>Severity:</strong> ${obs.severity}<br>
-        <strong>Submitted by:</strong> ${obs.observerName}<br>
-        <strong>Details:</strong> ${obs.details}
-      </div>
-    `;
-    document.getElementById("obsResponseModal").classList.add("active");
+  currentRespondingObsId = obsId;
+  currentEditingTreeId = obs.treeId; // Set the tree ID for this observation
+  
+  document.getElementById("obsResponseContent").innerHTML = `
+    <div style="font-size:13px;margin-bottom:12px;">
+      <strong>Tree:</strong> ${obs.treeName || "Unknown"}<br>
+      <strong>Type:</strong> ${obs.observationType || "General"}<br>
+      <strong>Severity:</strong> ${obs.severity || "low"}<br>
+      <strong>Submitted by:</strong> ${obs.observerName || "Unknown"}<br>
+      <strong>Details:</strong> ${obs.details || "No details"}
+    </div>
+  `;
+  
+  // Set current health status in the form
+  if (currentEditingTreeId) {
+    const tree = allTrees.find(t => t.id === currentEditingTreeId);
+    if (tree) {
+      document.getElementById("modalCurrentHealth").value = tree.healthStatus || "unknown";
+    }
   }
+  
+  document.getElementById("obsResponseModal").classList.add("active");
+}
 
   function closeObsResponseModal() {
     document.getElementById("obsResponseModal").classList.remove("active");
@@ -1164,29 +1327,71 @@
   }
 
   async function submitObsResponse(e) {
-    e.preventDefault();
-    if (!currentRespondingObsId) return;
+  e.preventDefault();
+  if (!currentRespondingObsId) return;
 
-    const status = document.getElementById("respStatus").value;
-    const notes = document.getElementById("respNotes").value;
-
-    try {
-      await db.collection("observations").doc(currentRespondingObsId).update({
-        status: status,
-        assignedTo: currentUser.uid,
-        response: notes,
-        respondedAt: new Date().toISOString(),
-      });
-
-      alert("✓ Response submitted!");
-      closeObsResponseModal();
-      await loadObservations();
-    } catch (err) {
-      console.error(err);
-      alert("Error: " + err.message);
-    }
+  // Get the observation first
+  const obs = allObservations.find(o => o.id === currentRespondingObsId);
+  if (!obs) {
+    alert("Observation not found");
+    return;
   }
 
+  // Get the tree for this observation
+  const treeId = obs.treeId;
+  if (!treeId) {
+    alert("Tree ID not found in observation");
+    return;
+  }
+
+  const newHealth = document.getElementById("modalNewHealth").value;
+  const status = document.getElementById("respStatus").value;
+  const notes = document.getElementById("respNotes").value;
+
+  if (!status || !notes || !newHealth) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  try {
+    // First, get the current tree health before updating
+    const treeDoc = await db.collection("trees").doc(treeId).get();
+    const currentTreeHealth = treeDoc.exists ? (treeDoc.data().healthStatus || "unknown") : "unknown";
+
+    // Update tree health
+    await db.collection("trees").doc(treeId).update({
+      healthStatus: newHealth,
+      lastCheckedBy: currentUser.uid,
+      lastCheckedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Update observation with response
+    await db.collection("observations").doc(currentRespondingObsId).update({
+      status: status,
+      assignedTo: currentUser.uid,
+      response: notes,
+      respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Log the update
+    await db.collection("tree_logs").add({
+      treeId: treeId,
+      caretakerId: currentUser.uid,
+      oldStatus: currentTreeHealth,
+      newStatus: newHealth,
+      notes: notes,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    alert("✓ Response submitted!");
+    closeObsResponseModal();
+    await loadObservations();
+    await loadZoneTrees(); // Reload trees to update health stats
+  } catch (err) {
+    console.error(err);
+    alert("Error: " + err.message);
+  }
+}
   // QR Modal
   function openQRModal() {
     document.getElementById("qrModal").classList.add("active");
@@ -1220,31 +1425,165 @@
     const tree = allTrees.find(t => t.id === treeId);
     if (!tree) return;
     
-    // Open tree.html with tree ID
-    window.open(`tree.html?treeId=${treeId}`, '_blank');
+    // Create a simple modal to show tree details
+    const modalHTML = `
+      <div class="modal" id="treeDetailModal" style="display:flex;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>Tree Details</div>
+            <button class="modal-close" onclick="document.getElementById('treeDetailModal').style.display='none'">×</button>
+          </div>
+          <div style="font-size:13px;line-height:1.8;">
+            <p><strong>Name:</strong> ${tree.commonName || "Unknown"}</p>
+            <p><strong>Health:</strong> ${tree.healthStatus || "unknown"}</p>
+            <p><strong>DBH:</strong> ${tree.dbh || "N/A"} cm</p>
+            <p><strong>Height:</strong> ${tree.height || "N/A"} m</p>
+            <p><strong>Notes:</strong> ${tree.notes || "None"}</p>
+            <p><strong>Last checked:</strong> ${formatDate(tree.lastCheckedAt)}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('treeDetailModal').style.display='none'">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('treeDetailModal');
+    if (existingModal) existingModal.remove();
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
   }
 
   // View observation details
   function viewObsDetails(obsId) {
-    alert("Observation details view - Full details modal coming soon");
+    const obs = allObservations.find(o => o.id === obsId);
+    if (!obs) return;
+    
+    const modalHTML = `
+      <div class="modal" id="obsDetailModal" style="display:flex;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>Observation Details</div>
+            <button class="modal-close" onclick="document.getElementById('obsDetailModal').style.display='none'">×</button>
+          </div>
+          <div style="font-size:13px;line-height:1.8;">
+            <p><strong>Tree:</strong> ${obs.treeName || "Unknown"}</p>
+            <p><strong>Type:</strong> ${obs.observationType || "General"}</p>
+            <p><strong>Severity:</strong> ${obs.severity || "low"}</p>
+            <p><strong>Submitted by:</strong> ${obs.observerName || "Unknown"}</p>
+            <p><strong>Date:</strong> ${formatDate(obs.submittedAt)}</p>
+            <p><strong>Details:</strong> ${obs.details || "No details"}</p>
+            <p><strong>Status:</strong> ${obs.status || "pending"}</p>
+            ${obs.response ? `<p><strong>Response:</strong> ${obs.response}</p>` : ''}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('obsDetailModal').style.display='none'">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('obsDetailModal');
+    if (existingModal) existingModal.remove();
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
   }
 
   // My history
   function viewMyHistory() {
-    alert("My history - Shows your tree updates from tree_logs collection");
+    if (!currentUser) {
+      alert("Please log in first");
+      return;
+    }
+    
+    // Create history modal
+    const modalHTML = `
+      <div class="modal" id="historyModal" style="display:flex;">
+        <div class="modal-content" style="max-width:600px;">
+          <div class="modal-header">
+            <div>My Update History</div>
+            <button class="modal-close" onclick="document.getElementById('historyModal').style.display='none'">×</button>
+          </div>
+          <div style="max-height:400px;overflow-y:auto;">
+            <div id="historyContent" class="loading">
+              <div class="spinner"></div> Loading history...
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('historyModal').style.display='none'">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('historyModal');
+    if (existingModal) existingModal.remove();
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Load history data
+    loadUserHistory();
+  }
+
+  async function loadUserHistory() {
+    try {
+      const historyContent = document.getElementById('historyContent');
+      const snap = await db.collection("tree_logs")
+        .where("caretakerId", "==", currentUser.uid)
+        .orderBy("timestamp", "desc")
+        .limit(20)
+        .get();
+      
+      if (snap.empty) {
+        historyContent.innerHTML = '<div class="empty-state">No history found</div>';
+        return;
+      }
+      
+      let html = '<div class="observations-list">';
+      snap.forEach(doc => {
+        const log = doc.data();
+        html += `
+          <div class="observation-item">
+            <div class="observation-header">
+              <div class="observation-title">Tree Update</div>
+              <span class="severity-badge ${log.newStatus === 'healthy' ? 'low' : log.newStatus === 'fair' ? 'medium' : 'high'}">${log.newStatus || 'unknown'}</span>
+            </div>
+            <div class="observation-meta">
+              Tree ID: ${log.treeId} • ${formatDate(log.timestamp)}
+            </div>
+            <div class="observation-details">
+              Changed from <strong>${log.oldStatus}</strong> to <strong>${log.newStatus}</strong>
+              ${log.notes ? `<br>Notes: ${log.notes}` : ''}
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      historyContent.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+      document.getElementById('historyContent').innerHTML = `<div class="loading" style="color:red;">Error loading history</div>`;
+    }
   }
 
   // Logout
   function logout() {
     auth.signOut().then(() => {
       window.location.href = "index.html";
+    }).catch(err => {
+      alert("Logout error: " + err.message);
     });
   }
 
   // Auth init
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
-      alert("Please log in");
       window.location.href = "index.html";
       return;
     }
@@ -1257,27 +1596,34 @@
       userDoc = doc.data() || {};
       userCollege = userDoc.collegeId;
 
-      const initials = (userDoc.displayName || user.email || "CT")
+      const initials = (userDoc.displayName || userDoc.name || user.email || "CT")
         .split(" ")
-        .map(p => p)
+        .map(p => p[0])
         .join("")
         .toUpperCase()
         .slice(0, 2);
       document.getElementById("caretakerAvatar").textContent = initials;
 
-      caretakerZoneId = userDoc.zoneId || (Array.isArray(userDoc.zones) && userDoc.zones);
+      caretakerZoneId = userDoc.zoneId;
 
       if (!caretakerZoneId) {
         document.getElementById("caretakerZoneLabel").textContent = "No zone assigned";
+        document.getElementById("treesGrid").innerHTML = '<div class="loading" style="color:orange;">No zone assigned to this caretaker.</div>';
         return;
       }
 
       // Get zone name
-      const zoneDoc = await db.collection("zones").doc(caretakerZoneId).get();
-      const zoneName = zoneDoc.data()?.name || caretakerZoneId;
+      try {
+        const zoneDoc = await db.collection("zones").doc(caretakerZoneId).get();
+        const zoneName = zoneDoc.exists ? zoneDoc.data().name : caretakerZoneId;
 
-      document.getElementById("caretakerZoneLabel").textContent = `Caretaker • ${zoneName}`;
-      document.getElementById("zoneDisplayName").textContent = zoneName;
+        document.getElementById("caretakerZoneLabel").textContent = `Caretaker • ${zoneName}`;
+        document.getElementById("zoneDisplayName").textContent = zoneName;
+      } catch (zoneErr) {
+        console.error("Error loading zone:", zoneErr);
+        document.getElementById("caretakerZoneLabel").textContent = `Caretaker • Zone: ${caretakerZoneId.substring(0, 8)}`;
+        document.getElementById("zoneDisplayName").textContent = "Zone " + caretakerZoneId.substring(0, 8);
+      }
 
       await loadZoneTrees();
       await loadObservations();
@@ -1285,12 +1631,64 @@
 
     } catch (err) {
       console.error(err);
-      alert("Error: " + err.message);
+      alert("Error loading dashboard: " + err.message);
     }
   });
 
-  // Global functions
-  window.switchTab = switchTab;
+  // Global functions - FIXED: Update tab function calls to pass event
+  // Tab switching - FIXED: Remove event parameter and simplify
+function switchTab(tabName) {
+    // Prevent recursive calls
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab && activeTab.textContent.includes(tabName)) {
+        return; // Already on this tab
+    }
+
+    // Deactivate all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Activate selected tab
+    const tabContent = document.getElementById(tabName + '-tab');
+    const tabButton = Array.from(document.querySelectorAll('.tab-btn')).find(btn => 
+        btn.textContent.includes(tabName.charAt(0).toUpperCase() + tabName.slice(1)) ||
+        btn.onclick.toString().includes(tabName)
+    );
+    
+    if (tabContent) tabContent.classList.add('active');
+    if (tabButton) tabButton.classList.add('active');
+
+    // Load appropriate data
+    if (tabName === 'observations') {
+        renderObservations();
+    } else {
+        renderTrees();
+    }
+}
+
+// Update HTML onclick handlers to use simple call
+// In your HTML, change from:
+// onclick="switchTab('trees')" 
+// to:
+// onclick="switchTabSimple('trees')"
+
+// Add a simpler version for HTML onclick
+function switchTabSimple(tabName) {
+    switchTab(tabName);
+}
+
+// Fix the global functions at the bottom
+window.switchTab = switchTab;
+window.switchTabSimple = switchTabSimple;
+
+// Remove or fix the problematic switchTab wrapper
+// DELETE THIS BLOCK from your original code:
+/*
+window.switchTab = (tabName) => {
+    const event = { target: document.querySelector(`[onclick*="${tabName}"]`) };
+    switchTab(tabName, event);
+};
+*/
   window.renderTrees = renderTrees;
   window.renderObservations = renderObservations;
   window.openHealthModal = openHealthModal;
@@ -1303,7 +1701,10 @@
   window.openObsResponseModal = openObsResponseModal;
   window.closeObsResponseModal = closeObsResponseModal;
   window.submitObsResponse = submitObsResponse;
-  window.openNotificationsModal = () => switchTab('notifications');
+  window.openNotificationsModal = () => {
+    const event = { target: document.querySelector('.tab-btn:nth-child(2)') };
+    switchTab('observations', event);
+  };
   window.markNotificationRead = markNotificationRead;
   window.viewMyHistory = viewMyHistory;
   window.logout = logout;
