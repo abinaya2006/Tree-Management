@@ -181,23 +181,167 @@ async function addTree() {
 
 
 // VIEW ALL TREES
+// VIEW ALL TREES
 async function viewAllTrees() {
-    const snapshot = await db.collection('trees').where('collegeId', '==', userCollege).get();
+    let query = db.collection('trees').where('collegeId', '==', userCollege);
     
-    let html = '<h2>All Trees</h2><table><thead><tr><th>Name</th><th>Species</th><th>Zone</th><th>Health</th><th>DBH</th><th>Option</th></tr></thead><tbody>';
+    // Get filter values
+    const zoneFilter = document.getElementById('zoneFilter') ? document.getElementById('zoneFilter').value : '';
+    const healthFilter = document.getElementById('healthFilter') ? document.getElementById('healthFilter').value : '';
     
+    // Apply zone filter if selected
+    if (zoneFilter) {
+        query = query.where('zoneId', '==', zoneFilter);
+    }
+    
+    // Note: We can't chain multiple where() with different fields in basic plan
+    // So we'll filter health status in JavaScript
+    const snapshot = await query.get();
+    
+    // Create filter controls HTML with improved layout
+    let filterControls = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+            <div style="flex: 1; min-width: 250px;">
+                <h2 style="margin: 0; color: #2c5f2d; font-size: 20px; font-weight: 600;">All Trees</h2>
+                <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">Manage and view all campus trees</p>
+            </div>
+            
+            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #495057; font-size: 13px;">Filter by Zone</label>
+                    <select id="zoneFilter" style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; width: 180px; background: white; color: #495057;">
+                        <option value="">All Zones</option>
+    `;
+    
+    // Add zone options to filter
+    for (const [zoneId, zoneName] of Object.entries(zoneList)) {
+        filterControls += `<option value="${zoneId}" ${zoneFilter === zoneId ? 'selected' : ''}>${zoneName}</option>`;
+    }
+    
+    filterControls += `
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #495057; font-size: 13px;">Filter by Health</label>
+                    <select id="healthFilter" style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; width: 160px; background: white; color: #495057;">
+                        <option value="">All Status</option>
+                        <option value="healthy" ${healthFilter === 'healthy' ? 'selected' : ''}>Healthy</option>
+                        <option value="fair" ${healthFilter === 'fair' ? 'selected' : ''}>Fair</option>
+                        <option value="poor" ${healthFilter === 'poor' ? 'selected' : ''}>Poor</option>
+                        <option value="dying" ${healthFilter === 'dying' ? 'selected' : ''}>Dying</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="applyFilters()" style="padding: 8px 16px; background: #2c5f2d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; white-space: nowrap;">
+                        Apply Filters
+                    </button>
+                    <button onclick="clearFilters()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; white-space: nowrap;">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create table
+    let html = filterControls + `
+        <div style="overflow-x: auto;  border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                <thead>
+                  <tr><th>Name</th><th>Species</th><th>Zone</th><th>Health</th><th>DBH (cm)</th><th>Height (m)</th><th>Option</th></tr>
+                </thead>
+                <tbody>
+    `;
+    
+    let treeCount = 0;
     snapshot.forEach(doc => {
         const tree = doc.data();
-        const healthColor = tree.healthStatus === 'healthy' ? 'green' : tree.healthStatus === 'fair' ? 'orange' : 'red';
-        html += `<tr><td>${tree.commonName}</td><td>${tree.genus} ${tree.species}</td><td>${zoneList[tree.zoneId] }</td><td style="color:${healthColor};">${tree.healthStatus}</td><td>${tree.dbh}</td><td><button onclick="viewTree()">View</button></td></tr>`;
+        const treeId = doc.id;
+        
+        // Apply health filter in JavaScript
+        if (healthFilter && tree.healthStatus !== healthFilter) {
+            return;
+        }
+        
+        treeCount++;
+        const healthColor = tree.healthStatus === 'healthy' ? '#28a745' : 
+                           tree.healthStatus === 'fair' ? '#ffc107' : 
+                           tree.healthStatus === 'poor' ? '#fd7e14' : '#dc3545';
+        
+        const zoneName = zoneList[tree.zoneId] || 'Unknown Zone';
+        
+        html += `
+            <tr style="border-bottom: 1px solid #dee2e6; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                <td style="padding: 14px 16px; color: #212529; font-size: 14px; font-weight: 500;">${tree.commonName || 'Unnamed'}</td>
+                <td style="padding: 14px 16px; color: #495057; font-size: 14px;">${tree.genus || ''} ${tree.species || ''}</td>
+                <td style="padding: 14px 16px; color: #495057; font-size: 14px;">${zoneName}</td>
+                <td style="padding: 14px 16px;">
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: ${healthColor}20; color: ${healthColor}; border: 1px solid ${healthColor}40;">
+                        ${tree.healthStatus || 'Unknown'}
+                    </span>
+                </td>
+                <td style="padding: 14px 16px; color: #495057; font-size: 14px; font-weight: 500;">${tree.dbh || '-'}</td>
+                <td style="padding: 14px 16px; color: #495057; font-size: 14px; font-weight: 500;">${tree.height || '-'}</td>
+                <td style="padding: 14px 16px;">
+                    <button onclick="viewTree('${treeId}')" style="padding: 6px 14px; background: #2c5f2d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s;">
+                        View Details
+                    </button>
+                </td>
+            </tr>
+        `;
     });
     
-    html += '</tbody></table>';
+    html += `</tbody></table></div>`;
+    
+    // Add tree count summary
+    html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 12px 16px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;">
+            <div style="color: #495057; font-size: 14px;">
+                <span style="font-weight: 600;">${treeCount}</span> tree${treeCount !== 1 ? 's' : ''} found
+            </div>
+            <div style="font-size: 13px; color: #6c757d;">
+                ${zoneFilter ? `Filtered by zone: ${zoneList[zoneFilter] || zoneFilter}` : healthFilter ? `Filtered by health: ${healthFilter}` : 'Showing all trees'}
+            </div>
+        </div>
+    `;
+    
+    if (treeCount === 0) {
+        html += `
+            <div style="text-align: center; padding: 40px 20px; background: white; border-radius: 8px; border: 1px solid #dee2e6; margin-top: 20px;">
+                <div style="color: #6c757d; font-size: 16px; margin-bottom: 8px;">🌳</div>
+                <div style="color: #6c757d; font-size: 15px; font-weight: 500; margin-bottom: 8px;">No trees found</div>
+                <div style="color: #adb5bd; font-size: 13px;">Try adjusting your filters or add new trees</div>
+            </div>
+        `;
+    }
+    
     document.getElementById('treeListContainer').innerHTML = html;
 }
 
-function viewTree(){
-    window.location.href = "tree.html"
+// Function to apply filters
+function applyFilters() {
+    viewAllTrees();
+}
+
+// Function to clear filters
+function clearFilters() {
+    // Clear filter dropdowns
+    const zoneFilter = document.getElementById('zoneFilter');
+    const healthFilter = document.getElementById('healthFilter');
+    
+    if (zoneFilter) zoneFilter.value = '';
+    if (healthFilter) healthFilter.value = '';
+    
+    // Reload trees without filters
+    viewAllTrees();
+}
+
+function viewTree(treeId){
+    if (treeId) {
+        window.open(`tree.html?treeId=${treeId}`, '_blank');
+    } else {
+        window.open('tree.html', '_blank');
+    }
 }
 
 async function addZone() {
@@ -276,19 +420,16 @@ async function loadZonesForDropdown() {
 
 
 async function addCare() {
-
-    
-    
     const name = document.getElementById('caretakername').value
     const email = document.getElementById('caretakerEmail').value
-    const zoneId = document.getElementById('zoneSelect').value;
+    const zoneId = document.getElementById('caretakerZoneSelect').value;
 
     const user = auth.currentUser;
     if (!user) { alert("Not logged in"); return; }
 
 
 
-    if (name ) {
+    if (name && email && zoneId) {
         try {
             const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
             const secondaryAuth = secondaryApp.auth();
@@ -323,6 +464,10 @@ async function addCare() {
                 console.error("Firestore error:", error);
             alert('Error: ' + error.message);
         }
+    }
+
+    else {
+        alert('Please fill all fields including zone assignment');
     }
 }
 
@@ -402,6 +547,52 @@ async function addCare() {
 //     }
 // };
 
+async function loadZonesForCaretakerDropdown() {
+   const zoneSelect = document.getElementById('caretakerZoneSelect');
+    
+    // Clear existing options except the placeholder
+    zoneSelect.innerHTML = '<option value="">-- Choose a Zone --</option>';
+
+    if (!userCollege) {
+        console.error("userCollege not set!");
+        return;
+    }
+
+    try {
+        const snapshot = await db.collection('zones')
+            .where('collegeId', '==', userCollege)
+            .get();
+
+        snapshot.forEach(doc => {
+            const zone = doc.data();
+            zoneList[doc.id] = doc.data().name;
+            const option = document.createElement('option');
+            option.value = doc.id; // you can store the zone document ID
+            option.textContent = zone.name;
+            zoneSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error loading zones:", error);
+    }
+
+    document.getElementById('caretakerZoneSelect').addEventListener('change', async function() {
+    const zoneId = this.value;
+    if (!zoneId) {
+        document.getElementById('showzoneDescription').value = '';
+        return;
+    }
+
+    try {
+        const zoneDoc = await db.collection('zones').doc(zoneId).get();
+        if (zoneDoc.exists) {
+            document.getElementById('showzoneDescription').value = zoneDoc.data().description;
+        }
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+}
 
 // Modal buttons
 function showAddZone() {
@@ -413,6 +604,7 @@ function closeZoneModal() {
 }
 function showAddCare() {
             document.getElementById("caremodal").classList.add("active");
+            loadZonesForCaretakerDropdown();
 }
 
 function closeCareModal() {

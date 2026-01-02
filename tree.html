@@ -51,7 +51,10 @@
       display: grid;
       grid-template-columns: 1fr 3fr;
       gap: 20px;
+      transition: all 0.3s ease;
     }
+    
+
 
     @media (max-width: 900px) {
       .main-grid {
@@ -66,6 +69,10 @@
       padding: 15px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       height: fit-content;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      max-height: 80vh;
     }
 
     .panel-title {
@@ -73,6 +80,11 @@
       font-weight: 600;
       margin-bottom: 12px;
       color: #2c5f2d;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      padding-bottom: 5px;
     }
 
     .search-box {
@@ -82,6 +94,10 @@
       border-radius: 4px;
       margin-bottom: 12px;
       font-size: 13px;
+      position: sticky;
+      top: 35px; /* panel-title height + spacing */
+      background: white;
+      z-index: 10;
     }
 
     .search-box:focus {
@@ -94,8 +110,12 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 600px;
       overflow-y: auto;
+      max-height: calc(80vh - 120px); /* Adjust based on panel title + search box + padding */
+      flex: 1;
+      min-height: 0;
+      padding-bottom: 5px; 
+      padding-right: 5px;
     }
 
     .tree-item {
@@ -307,6 +327,7 @@
       width: 100%;
       height: 100%;
       background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px;
     }
 
     .modal-content {
@@ -360,9 +381,11 @@
     }
 
     .modal-body {
-      padding: 25px;
+      padding: 20px;
       max-height: 600px;
       overflow-y: auto;
+      flex: 1; 
+      max-height: calc(80vh - 130px); 
     }
 
     .modal-footer {
@@ -454,12 +477,14 @@
 
     /* Scrollbar */
     .tree-list::-webkit-scrollbar {
-      width: 6px;
+      width: 7px;
+
     }
 
     .tree-list::-webkit-scrollbar-track {
       background: #f1f1f1;
       border-radius: 10px;
+      margin: 5px ;
     }
 
     .tree-list::-webkit-scrollbar-thumb {
@@ -673,6 +698,8 @@ async function initAuth() {
       document.getElementById('collegeLabel').textContent = userData.collegeName || 'College';
       document.getElementById('userInfo').textContent = userData.displayName || user.email;
       
+      document.querySelector('.tree-list-panel').style.display = 'block';
+
       // Load trees for logged in user
       await loadTrees();
       
@@ -691,6 +718,7 @@ async function initAuth() {
           Login
         </button>
       `;
+      document.querySelector('.tree-list-panel').style.display = 'none';
       
       // If there's a treeId in URL, it's already loaded
       // If not, show empty state
@@ -954,17 +982,15 @@ async function displayTreeDetails(tree) {
       ` : ''}
       
       <div class="action-buttons">
-        ${currentUser ? `
+      
           <button class="btn btn-primary" onclick="openObservationModal()">
             📝 Submit Observation
           </button>
-        ` : ''}
+        
         <button class="btn btn-secondary" onclick="downloadQRCode('${tree.id}', '${tree.commonName || 'tree'}')">
           ⬇️ Download QR Code
         </button>
-        <button class="btn btn-secondary" onclick="shareTreeLink('${tree.id}')">
-          🔗 Share Link
-        </button>
+        
       </div>
     </div>
   `;
@@ -1099,11 +1125,7 @@ function openObservationModal() {
     return;
   }
   
-  if (!currentUser) {
-    alert('Please login to submit observations');
-    window.location.href = 'index.html';
-    return;
-  }
+  
   
   document.getElementById('observationForm').reset();
   document.getElementById('observationModal').style.display = 'block';
@@ -1116,10 +1138,7 @@ function closeObservationModal() {
 
 // Submit observation
 async function submitObservation() {
-  if (!currentUser) {
-    alert('Please login to submit observations');
-    return;
-  }
+  
   
   const btn = document.getElementById('submitObservationBtn');
   btn.disabled = true;

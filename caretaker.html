@@ -558,7 +558,6 @@
       <div class="page-header-subtext">View, manage trees, and respond to observations in your zone.</div>
     </div>
     <div class="quick-actions">
-      <button class="btn btn-secondary" onclick="openQRModal()">📱 Scan QR</button>
       <button class="btn btn-secondary" onclick="viewMyHistory()">📊 My History</button>
     </div>
   </div>
@@ -1202,10 +1201,8 @@ function renderNotifications() {
     if (allNotifications.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div>🔔 No new notifications</div>
-                <div style="font-size:11px;color:#999;margin-top:5px;">
-                    User ID: ${currentUser?.uid?.substring(0, 10) || 'none'}
-                </div>
+                <div>No new notifications</div>
+                
             </div>
         `;
         return;
@@ -1439,16 +1436,7 @@ function renderNotifications() {
     alert("Error: " + err.message);
   }
 }
-  // QR Modal
-  function openQRModal() {
-    document.getElementById("qrModal").classList.add("active");
-    document.getElementById("qrInput").value = "";
-    setTimeout(() => document.getElementById("qrInput").focus(), 100);
-  }
-
-  function closeQRModal() {
-    document.getElementById("qrModal").classList.remove("active");
-  }
+  
 
   async function handleQRInput() {
     const qrValue = document.getElementById("qrInput").value.trim();
