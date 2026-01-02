@@ -25,43 +25,60 @@ let userRole = null;
 let userCollege = null;
 
 
-
-// SIGNUP
-async function signup() {
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    const name = document.getElementById('signupName').value;
-    const college = document.getElementById('collegeName').value;
-
-    if (!email || !password || !name || !college) {
-        alert('Please fill all fields');
-        return;
-    }
-
-    try {
-        const result = await auth.createUserWithEmailAndPassword(email, password);
-        const uid = result.user.uid;
-        const collegeId = 'college_' + Date.now();
-
-        // Create user doc
-        await db.collection('users').doc(uid).set({
-            email, displayName: name, role: 'admin', collegeId,
-            createdAt: new Date().toISOString()
+document.addEventListener('DOMContentLoaded', function() {
+    // Check current page
+    const currentPage = window.location.pathname;
+    const isAdminPage = currentPage.includes("admin.html");
+    const isCaretakerPage = currentPage.includes("caretaker.html");
+    
+    if (isAdminPage || isCaretakerPage) {
+        // On protected pages, wait for auth check
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                // Not logged in, redirect to index.html
+                window.location.href = "index.html";
+                return;
+            }
+            
+            // User is logged in, continue with normal flow
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                userRole = userData.role;
+                userCollege = userData.collegeId;
+                
+                // Check if user has access to this page
+                if (isAdminPage && userRole !== "admin") {
+                    alert("Access denied! Admins only.");
+                    window.location.href = "index.html";
+                    return;
+                }
+                
+                if (isCaretakerPage && userRole !== "caretaker") {
+                    alert("Access denied! Caretakers only.");
+                    window.location.href = "index.html";
+                    return;
+                }
+                
+                // User has correct role, load content
+                loadStats();
+                await loadZonesForDropdown();
+                await viewAllTrees();
+                
+                // Show dashboard if it exists
+                const dashboard = document.getElementById('dashboard');
+                if (dashboard) {
+                    dashboard.style.display = 'block';
+                }
+            } else {
+                // User document doesn't exist, log out
+                await auth.signOut();
+                window.location.href = "index.html";
+            }
         });
-
-        // Create college doc
-        await db.collection('colleges').doc(collegeId).set({
-            name: college,
-            location: { lat: 40.599, lng: -75.290 },
-            admin_id: uid,
-            createdAt: new Date().toISOString()
-        });
-
-        alert('✓ Account created! Logging in...');
-    } catch (error) {
-        alert('Error: ' + error.message);
     }
-}
+});
+
 
 // SIGNIN
 async function signin() {
@@ -102,25 +119,27 @@ auth.onAuthStateChanged(async (user) => {
             userRole = userData.role;
             userCollege = userData.collegeId;
             
-            
-            if (userRole === "admin" && !location.pathname.includes("admin")) {
-                window.location.href = "admin.html";
+            // Only redirect from index.html
+            const currentPage = window.location.pathname;
+            if (currentPage.includes("index.html") || currentPage === "/") {
+                if (userRole === "admin") {
+                    window.location.href = "admin.html";
+                }
+                else if (userRole === "caretaker") {
+                    window.location.href = "caretaker.html";
+                }
             }
-            else if (userRole === "caretaker" && !location.pathname.includes("caretaker")) {
-                window.location.href = "caretaker.html";
-            }
-
-            loadStats();
-            await loadZonesForDropdown()
-            await viewAllTrees()
         }
     } else {
         currentUser = null;
-        document.getElementById('loginPage').classList.remove('hidden');
-        document.getElementById('dashboard').classList.add('hidden');
+        // Only show/hide login elements if they exist (on index.html)
+        const loginPage = document.getElementById('loginPage');
+        const dashboard = document.getElementById('dashboard');
+        
+        if (loginPage) loginPage.classList.remove('hidden');
+        if (dashboard) dashboard.classList.add('hidden');
     }
 });
-
 // LOAD STATS
 async function loadStats() {
     const snapshot = await db.collection('trees').where('collegeId', '==', userCollege).get();
