@@ -523,6 +523,197 @@
       color: #999;
       font-size: 13px;
     }
+
+    @media (max-width: 768px) {
+  .navbar {
+    height: 56px;
+    padding: 0 12px;
+  }
+  
+  .navbar-logo {
+    font-size: 22px;
+  }
+  
+  .navbar-title {
+    font-size: 15px;
+  }
+  
+  .navbar-subtitle {
+    font-size: 11px;
+  }
+  
+  .navbar-date {
+    font-size: 12px;
+    display: none; /* Hide date on mobile */
+  }
+  
+  .status-indicator {
+    display: none; /* Hide status indicator on mobile */
+  }
+  
+  .notification-badge {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  .navbar-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+  
+  .navbar-logout {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .badge-count {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    top: -3px;
+    right: -3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    height: 52px;
+    padding: 0 10px;
+  }
+  
+  .navbar-logo {
+    font-size: 20px;
+  }
+  
+  .navbar-title {
+    font-size: 14px;
+    max-width: 150px;
+  }
+  
+  .navbar-subtitle {
+    display: none; /* Hide subtitle on very small screens */
+  }
+  
+  .notification-badge {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .navbar-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  
+  .navbar-logout {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .navbar-actions {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar {
+    padding: 0 8px;
+  }
+  
+  .navbar-logo {
+    font-size: 18px;
+  }
+  
+  .navbar-title {
+    font-size: 13px;
+    max-width: 120px;
+  }
+  
+  .navbar-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .navbar-logout {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+  
+  .notification-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}
+
+/* Tablet specific styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .navbar {
+    height: 58px;
+    padding: 0 14px;
+  }
+  
+  .navbar-title {
+    font-size: 16px;
+  }
+  
+  .navbar-date {
+    font-size: 13px;
+  }
+}
+
+/* Desktop specific styles */
+@media (min-width: 1025px) {
+  .navbar {
+    padding: 0 20px;
+  }
+  
+  .navbar-title {
+    font-size: 17px;
+  }
+  
+  .navbar-subtitle {
+    font-size: 13px;
+  }
+  
+  .navbar-logout {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Safe area for notch devices */
+@supports (padding: max(0px)) {
+  .navbar {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: env(safe-area-inset-top);
+    height: calc(60px + env(safe-area-inset-top));
+  }
+  
+  @media (max-width: 768px) {
+    .navbar {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+      height: calc(56px + env(safe-area-inset-top));
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .navbar {
+      padding-left: max(10px, env(safe-area-inset-left));
+      padding-right: max(10px, env(safe-area-inset-right));
+      height: calc(52px + env(safe-area-inset-top));
+    }
+  }
+}
+
+
+
+
+
   </style>
 </head>
 <body>
