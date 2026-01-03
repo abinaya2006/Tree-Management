@@ -1,5 +1,5 @@
 
-# Tree Management System
+# Tree Inventory - Tree Management System
 
 A web-based application to digitally manage and monitor trees within a campus using QR codes, role-based access, and real-time reporting.
 This project was developed as a hackathon MVP, prioritizing core functionality and real-world feasibility over UI polish and edge-case handling.
