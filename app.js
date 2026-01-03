@@ -81,14 +81,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // SIGNIN
+// SIGNIN - SIMPLIFIED VERSION
 async function signin() {
     const email = document.getElementById('signinEmail').value;
     const password = document.getElementById('signinPassword').value;
 
+    // Validate inputs
+    if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+    }
+
     try {
+        // Show loading state
+        const signinBtn = document.querySelector('button[onclick="signin()"]');
+        const originalText = signinBtn.textContent;
+        signinBtn.textContent = 'Signing in...';
+        signinBtn.disabled = true;
+
+        // Sign in with Firebase
         await auth.signInWithEmailAndPassword(email, password);
+        
+        // Success - auth state change will handle redirection
+        console.log('Signed in successfully');
+        
     } catch (error) {
-        alert('Error: ' + error.message);
+        console.error('Signin error:', error);
+        
+        // User-friendly error messages
+        let errorMessage = 'Sign-in failed. ';
+        
+        switch(error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+                errorMessage += 'Invalid email or password.';
+                break;
+            case 'auth/invalid-email':
+                errorMessage += 'Invalid email format.';
+                break;
+            case 'auth/user-disabled':
+                errorMessage += 'This account has been disabled.';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage += 'Too many attempts. Please try again later.';
+                break;
+            case 'auth/network-request-failed':
+                errorMessage += 'Network error. Please check your connection.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        alert(errorMessage);
+        
+        // Reset button
+        const signinBtn = document.querySelector('button[onclick="signin()"]');
+        signinBtn.textContent = originalText;
+        signinBtn.disabled = false;
     }
 }
 
@@ -198,12 +247,73 @@ async function addTree() {
 
 
 
+async function checkZonesWithoutCaretakers() {
+    if (!userCollege) return null;
+    
+    try {
+        // Get all zones for this college
+        const zonesSnapshot = await db.collection('zones')
+            .where('collegeId', '==', userCollege)
+            .get();
+        
+        const zonesWithoutCaretakers = [];
+        
+        // Get all caretaker IDs to check if they exist
+        const caretakerIds = [];
+        zonesSnapshot.forEach(doc => {
+            const zoneData = doc.data();
+            if (zoneData.caretakerId && zoneData.caretakerId !== '') {
+                caretakerIds.push(zoneData.caretakerId);
+            }
+        });
+        
+        // Check which caretaker IDs actually exist
+        const existingCaretakers = new Set();
+        if (caretakerIds.length > 0) {
+            const caretakersSnapshot = await db.collection('users')
+                .where('role', '==', 'caretaker')
+                .where('collegeId', '==', userCollege)
+                .get();
+            
+            caretakersSnapshot.forEach(doc => {
+                existingCaretakers.add(doc.id);
+            });
+        }
+        
+        // Now check each zone
+        zonesSnapshot.forEach(doc => {
+            const zoneData = doc.data();
+            const zoneId = doc.id;
+            const caretakerId = zoneData.caretakerId;
+            
+            // Zone has no caretaker OR caretaker doesn't exist
+            if (!caretakerId || caretakerId === '' || !existingCaretakers.has(caretakerId)) {
+                zonesWithoutCaretakers.push({
+                    id: zoneId,
+                    name: zoneData.name || 'Unnamed Zone',
+                    caretakerId: caretakerId
+                });
+                
+                // If caretaker doesn't exist, update the zone to remove the invalid caretakerId
+                if (caretakerId && caretakerId !== '' && !existingCaretakers.has(caretakerId)) {
+                    db.collection('zones').doc(zoneId).update({
+                        caretakerId: ''
+                    }).catch(err => console.error("Error updating zone:", err));
+                }
+            }
+        });
+        
+        return zonesWithoutCaretakers;
+    } catch (error) {
+        console.error("Error checking zones without caretakers:", error);
+        return null;
+    }
+}
 
-// VIEW ALL TREES
 // VIEW ALL TREES
 async function viewAllTrees() {
     let query = db.collection('trees').where('collegeId', '==', userCollege);
-    
+    const zonesWithoutCaretakers = await checkZonesWithoutCaretakers();
     // Get filter values
     const zoneFilter = document.getElementById('zoneFilter') ? document.getElementById('zoneFilter').value : '';
     const healthFilter = document.getElementById('healthFilter') ? document.getElementById('healthFilter').value : '';
@@ -217,6 +327,34 @@ async function viewAllTrees() {
     // So we'll filter health status in JavaScript
     const snapshot = await query.get();
     
+
+    // Create warning message for zones without caretakers
+    let warningMessage = '';
+    if (zonesWithoutCaretakers && zonesWithoutCaretakers.length > 0) {
+        warningMessage = `
+            <div style="background: #fff8e1; border-left: 4px solid #ff9800; padding: 12px 16px; margin-bottom: 20px; border-radius: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 18px;">⚠️</span>
+                    <strong style="color: #e65100;">Action Required: Zones without Caretakers</strong>
+                </div>
+                <div style="color: #5d4037; font-size: 14px; margin-bottom: 10px;">
+                    The following zones don't have assigned caretakers. Please assign caretakers to these zones for proper management.
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                    ${zonesWithoutCaretakers.map(zone => `
+                        <span style="background: #ffecb3; color: #5d4037; padding: 4px 12px; border-radius: 20px; font-size: 13px; border: 1px solid #ffd54f;">
+                            ${zone.name}
+                        </span>
+                    `).join('')}
+                </div>
+                <button onclick="showAddCare()" style="background: #ff9800; color: white; border: none; border-radius: 4px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <span>+</span>
+                    Assign Caretakers Now
+                </button>
+            </div>
+        `;
+    }
+
     // Create filter controls HTML with improved layout
     let filterControls = `
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
@@ -263,7 +401,7 @@ async function viewAllTrees() {
     `;
     
     // Create table
-    let html = filterControls + `
+    let html = warningMessage + filterControls + `
         <div style="overflow-x: auto;  border-radius: 8px;">
             <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
                 <thead>
@@ -412,6 +550,10 @@ async function loadZonesForDropdown() {
             const option = document.createElement('option');
             option.value = doc.id; // you can store the zone document ID
             option.textContent = zone.name;
+
+            const hasCaretaker = !!zone.caretakerId && zone.caretakerId !== '';
+            option.textContent = zone.name + (hasCaretaker ? '' : ' ⚠️');
+
             zoneSelect.appendChild(option);
         });
     } catch (error) {
