@@ -401,12 +401,14 @@ async function viewAllTrees() {
     
     // Create table
     let html = warningMessage + filterControls + `
-        <div style="overflow-x: auto;  border-radius: 8px;">
-            <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
-                <thead>
-                  <tr><th>Name</th><th>Species</th><th>Zone</th><th>Health</th><th>DBH (cm)</th><th>Height (m)</th><th>Option</th></tr>
+        <div style="overflow-x: auto;  border-radius: 8px;max-height: 500px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 800px;
+            ">
+                <thead >
+                  <tr position: sticky; top: 0; z-index: 1; background: #f8f9fa;><th>Name</th><th>Species</th><th>Zone</th><th>Health</th><th>DBH (cm)</th><th>Height (m)</th><th>Option</th></tr>
                 </thead>
                 <tbody>
+
     `;
     
     let treeCount = 0;
