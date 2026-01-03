@@ -2,6 +2,7 @@
 # Tree Management System
 
 A web-based application to digitally manage and monitor trees within a campus using QR codes, role-based access, and real-time reporting.
+This project was developed as a hackathon MVP, prioritizing core functionality and real-world feasibility over UI polish and edge-case handling.
 
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Hackathon](https://img.shields.io/badge/hackathon-project-blue)
@@ -16,14 +17,23 @@ A web-based application to digitally manage and monitor trees within a campus us
 - Real-time Firestore updates
 - Notification system for caretakers
 
+## User Roles
+
+| Role      | Permissions                                              |
+| --------- | -------------------------------------------------------- |
+| Admin     | Full access to manage zones, trees, users, and analytics |
+| Caretaker | Manage trees and observations in assigned zone           |
+| Observer  | Submit observations via tree QR page                     |
+
 
 ## Tech Stack
 
 - Frontend: HTML, CSS, JavaScript
-- Backend: Node.js, Express
+- Backend: Firebase (Backend-as-a-Service)
 - Database: Firebase Firestore
-- Auth: Firebase Authentication
-- QR: qrcode.js
+- Authentication: Firebase Authentication
+- QR Generation: qrcode.js
+
   
 ## Screenshots
 
@@ -39,6 +49,13 @@ A web-based application to digitally manage and monitor trees within a campus us
 - Indexed Firestore queries
 - Cached QR URLs
 - Reduced duplicate reads
+
+## Use Case
+
+- College campuses
+- Municipal tree departments
+- NGOs working on urban greenery
+- Environmental audits
   
 ## Future Scope
 
@@ -47,15 +64,14 @@ A web-based application to digitally manage and monitor trees within a campus us
 - Map-based tree visualization
 - Mobile app for caretakers
 
-
 ## Demo
 
 - Live App: https://your-app-link
 - Demo Video: https://youtu.be/your-video
 
-## Authors
+## Team
 
-- [@Abinaya](https://www.github.com/abinaya2006)
-- [@Harshatha Rithika](https://www.github.com/harshatha-exe)
-- [@Manaswini](https://www.github.com/ksm-13)
+- [@Harshatha Rithika](https://www.github.com/harshatha-exe) - Team Leader - System Design / Documentation
+- [@Abinaya](https://www.github.com/abinaya2006) - Frontend UI / Backend Logic / Firebase Intergration
+- [@Manaswini](https://www.github.com/ksm-13) - Idea / Research / Testing
 
