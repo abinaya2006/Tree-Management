@@ -37,12 +37,13 @@ This project was developed as a hackathon MVP, prioritizing core functionality a
   
 ## Screenshots
 
-![Admin Dasboard](/screenshots/admin_jpg.jpg)
-)
-![CareTaker Dashboard](<img width="1349" height="601" alt="image" src="https://github.com/user-attachments/assets/d49227cc-657d-4905-b49c-9a4b50a17caa" />
-)
-![Tree Details Page](<img width="1151" height="592" alt="image" src="https://github.com/user-attachments/assets/61102e68-cd14-44cb-9ac9-1ae0689512ee" />
-)
+- Admin Dashboard
+  
+    <img src="screenshots/admin.jpg" alt="Admin Dashboard" width="600" > 
+  
+- Caretaker dashboard
+  
+    <img src="screenshots/caretaker.jpg" alt="Admin Dashboard" width="600">
 
 ## Optimizations
 
@@ -66,7 +67,7 @@ This project was developed as a hackathon MVP, prioritizing core functionality a
 
 ## Demo
 
-- Live App: https://your-app-link
+- Live App: [https://tree-inventory](https://tree-inventory.netlify.app/)
 - Demo Video: https://youtu.be/your-video
 
 ## Team
