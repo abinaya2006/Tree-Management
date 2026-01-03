@@ -1,13 +1,12 @@
 
 let zoneList = {};
 
-// REPLACE WITH YOUR FIREBASE CONFIG
+
 const firebaseConfig = {
     apiKey: "AIzaSyCNV72D3X6ecI3tpqnPt4CUWJzrLo83Bkc",
     authDomain: "try-firebase-bdb77.firebaseapp.com",
     projectId: "try-firebase-bdb77",
     storageBucket: "try-firebase-bdb77.firebasestorage.app",
-    // storageBucket: "try-firebase-bdb77.appspot.com",
     messagingSenderId: "327656427702",
     appId: "1:327656427702:web:c2bf0fff68d18460029617",
     measurementId: "G-KWBQWMT4GJ"
@@ -81,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // SIGNIN
-// SIGNIN - SIMPLIFIED VERSION
 async function signin() {
     const email = document.getElementById('signinEmail').value;
     const password = document.getElementById('signinPassword').value;
@@ -206,6 +204,7 @@ async function loadStats() {
     document.getElementById('needsCareTrees').textContent = needsCare;
 }
 
+//ADD TREE FUNCTION
 async function addTree() {
     
     const name = document.getElementById('treeName').value
@@ -246,7 +245,7 @@ async function addTree() {
 }
 
 
-
+// FUNCTION TO CHECK ZONE WITHOUT ANY CARETAKER
 async function checkZonesWithoutCaretakers() {
     if (!userCollege) return null;
     
@@ -501,6 +500,7 @@ function viewTree(treeId){
     }
 }
 
+//ADD ZONE
 async function addZone() {
     
     const name = document.getElementById('zonename').value
@@ -632,81 +632,6 @@ async function addCare() {
     }
 }
 
-// Wait for DOM to be fully loaded
-// document.addEventListener('DOMContentLoaded', function() {
-//     const qrButton = document.getElementById('qrButton');
-    
-//     if (qrButton) {
-//         qrButton.addEventListener('click', function(e) {
-//             e.preventDefault();
-            
-//             // Check if QRCode library is loaded
-//             if (typeof QRCode === 'undefined') {
-//                 alert('QRCode library not loaded. Please check your internet connection.');
-//                 console.error('QRCode is not defined. Library not loaded.');
-//                 return;
-//             }
-            
-//             const url = 'https://www.youtube.com/watch?v=qNiUlml9MDk';
-//             const size = 300;
-            
-//             console.log('Generating QR code for:', url);
-            
-//             generateQr(url, size);
-//         });
-//     } else {
-//         console.error('qrButton not found');
-//     }
-// });
-
-// const generateQr = (url, size) => {
-//     // Clear previous QR code if exists
-//     const container = document.getElementById('qroutput');
-//     if (!container) {
-//         console.error('Element with id "qrcode" not found');
-//         return;
-//     }
-    
-//     container.innerHTML = ''; // Clear previous content
-    
-//     try {
-//         // Create QR code
-//         const qrcode = new QRCode(container, {
-//             text: url,
-//             width: size,
-//             height: size,
-//             colorDark: "#000000",
-//             colorLight: "#ffffff",
-//             correctLevel: QRCode.CorrectLevel.H
-//         });
-        
-//         console.log('QR code generated successfully');
-        
-//         // Add a download button
-//         setTimeout(() => {
-//             const qrImg = container.querySelector('img');
-//             if (qrImg) {
-//                 addDownloadButton(qrImg.src, 'tree-qr-code.png');
-//             }
-//         }, 100);
-        
-//     } catch (error) {
-//         console.error('Error generating QR code:', error);
-        
-//         // Fallback: Show the URL
-//         container.innerHTML = `
-//             <div style="padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
-//                 <h4>QR Code Data</h4>
-//                 <p style="word-break: break-all;">${url}</p>
-//                 <p><small>Error: Could not generate QR code. ${error.message}</small></p>
-//                 <button onclick="window.open('https://www.qr-code-generator.com/', '_blank')" 
-//                         style="padding: 5px 10px; margin-top: 10px;">
-//                     Generate QR Online
-//                 </button>
-//             </div>
-//         `;
-//     }
-// };
 
 async function loadZonesForCaretakerDropdown() {
    const zoneSelect = document.getElementById('caretakerZoneSelect');
@@ -776,8 +701,6 @@ function showAddTree() {
     document.getElementById("treemodal").classList.add("active");
 
 }
-
-
 
 function closeTreeModal() {
     document.getElementById("treemodal").classList.remove("active");
