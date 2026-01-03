@@ -695,7 +695,7 @@ async function initAuth() {
       const userData = userDoc.data() || {};
       userCollege = userData.collegeId;
       
-      document.getElementById('collegeLabel').textContent = userData.collegeName || 'College';
+      document.getElementById('collegeLabel').textContent = userData.collegeName || 'MIT Anna University';
       document.getElementById('userInfo').textContent = userData.displayName || user.email;
       
       document.querySelector('.tree-list-panel').style.display = 'block';
