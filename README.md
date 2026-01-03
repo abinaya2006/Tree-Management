@@ -3,11 +3,8 @@
 
 A web-based application to digitally manage and monitor trees within a campus using QR codes, role-based access, and real-time reporting.
 
-
 ![Status](https://img.shields.io/badge/status-active-success)
-
 ![Hackathon](https://img.shields.io/badge/hackathon-project-blue)
-
 ![Sustainability](https://img.shields.io/badge/Sustainability-Green-darkgreen)
 
 ## Features
@@ -30,7 +27,7 @@ A web-based application to digitally manage and monitor trees within a campus us
   
 ## Screenshots
 
-![Admin Dasboard](<img width="1345" height="600" alt="image" src="https://github.com/user-attachments/assets/3d47a27d-21ff-4e0d-8ee3-314ab81454e6" />
+![Admin Dasboard](/screenshots/admin_jpg.jpg)
 )
 ![CareTaker Dashboard](<img width="1349" height="601" alt="image" src="https://github.com/user-attachments/assets/d49227cc-657d-4905-b49c-9a4b50a17caa" />
 )
