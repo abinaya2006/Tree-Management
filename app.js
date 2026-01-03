@@ -620,7 +620,14 @@ async function addCare() {
             })
             
 
-            alert('✓ Caretaker added!');
+             alert(`✓ Caretaker added successfully!
+                Email: ${email}
+                Password: ${defaultPassword}
+
+                Instructions:
+                    1. Caretaker can now login using the email and password above
+                    2. They will have access to their assigned zone dashboard
+                    `);
             closeCareModal()
             loadStats();
         } catch (error) {
